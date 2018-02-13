@@ -65,7 +65,22 @@ typedef OpenMesh::PolyMesh_ArrayKernelT<>  MyMesh;
 // Build a simple cube and write it to std::cout
 	
 MyMesh mesh;
-	
+
+// mouse control state
+typedef enum { ROTATE, TRANSLATE, SCALE } CONTROL_STATE;
+CONTROL_STATE controlState = ROTATE;
+typedef enum { X_AXIS, Y_AXIS, Z_AXIS} ROTATE_AXIS;
+
+int leftMouseButton = 0; // 1 if pressed, 0 if not 
+int middleMouseButton = 0; // 1 if pressed, 0 if not
+int rightMouseButton = 0; // 1 if pressed, 0 if not
+// mouse coordinate
+int mousePos[2]; 
+// state of the world
+float landRotate[3] = { 0.0f, 0.0f, 0.0f };
+float landTranslate[3] = { 0.0f, 0.0f, 0.0f };
+float landScale[3] = { 1.0f, 1.0f, 1.0f };
+
 void init()
 {
     glShadeModel(GL_SMOOTH);
@@ -73,7 +88,7 @@ void init()
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_LIGHTING);
     glEnable(GL_LIGHT0);
-    GLfloat lightpos[] = {10.0, 10.0, 10.0, 0.};
+    GLfloat lightpos[] = {2.0, 2.0, 2.0, 0.0};
     glLightfv(GL_LIGHT0, GL_POSITION, lightpos);
     GLfloat white[] = {0.8f, 0.8f, 0.8f, 1.0f};
     GLfloat cyan[] = {0.f, .8f, .8f, 1.f};
@@ -97,17 +112,16 @@ void init()
     // mBody.init(myMesh);
 }
 
+
 void display()
 {
-    std::cout<<"Before Display"<<std::endl;
-
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glMatrixMode(GL_MODELVIEW);  
     glLoadIdentity(); 
-    gluLookAt(2, 0, 0, 0, 0, 0, 0, 1, 0);
+    gluLookAt(2, 0, 2, 0, 0, 0, 0, 1, 0);
     glClear(GL_COLOR_BUFFER_BIT| GL_DEPTH_BUFFER_BIT);
     glBegin(GL_TRIANGLES);
-    glColor3f(0.5, 0.5, 0.0);
+    glColor3f(1.0, 1.0, 1.0);
     // Print all the faces
 	for(MyMesh::FaceIter f_it = mesh.faces_begin(); f_it != mesh.faces_end(); ++f_it) {
 		glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
@@ -115,8 +129,25 @@ void display()
 		for (MyMesh::FaceVertexIter fv_it=mesh.fv_iter(*f_it); fv_it.is_valid(); ++fv_it)
   		{
 	    	// do something with e.g. mesh.point(*vv_it)
-			//std::cout << "The Face #" << *f_it << "'s valence is " << mesh.point(*fv_it) << std::endl;
-			glVertex3f(mesh.point(*fv_it)[0], mesh.point(*fv_it)[1], mesh.point(*fv_it)[2]);    	
+	    	// rotate x
+	    	float sin_t = sin(landRotate[1]);
+   			float cos_t = cos(landRotate[1]);
+   			float x = mesh.point(*fv_it)[0]; float y = mesh.point(*fv_it)[1]; float z = mesh.point(*fv_it)[2];
+			y = y * cos_t - z * sin_t;
+        	z = z * cos_t + y * sin_t;
+        	// rotate y
+        	//sin_t = sin(landRotate[0]);
+   			//cos_t = cos(landRotate[0]);
+   			//x = x * cos_t - z * sin_t;
+        	//z = z * cos_t + x * sin_t;
+        	// rotate z
+        	//sin_t = sin(landRotate[2]);
+   			//cos_t = cos(landRotate[2]);
+   			//x = x * cos_t - y * sin_t;
+       		//y = y * cos_t + x * sin_t;
+        
+			//glVertex3f(mesh.point(*fv_it)[0], mesh.point(*fv_it)[1], mesh.point(*fv_it)[2]);
+			glVertex3f(x, y, z);    	
 		}
     }
 	
@@ -151,8 +182,7 @@ void display()
 
 
     glutSwapBuffers();
-    std::cout<<"After Display"<<std::endl;
-
+    
 }
 
 void keyboardFunc(unsigned char key, int x, int y)
@@ -184,6 +214,117 @@ void reshape(int w, int h)
         gluPerspective (80, (float)w /( float )h,1.0,5000.0 );
     std::cout<<"After Reshape"<<std::endl;
 
+}
+
+
+void mouseMotionDragFunc(int x, int y)
+{
+	// mouse has moved and one of the mouse buttons is pressed (dragging)
+
+	// the change in mouse position since the last invocation of this function
+	int mousePosDelta[2] = { x - mousePos[0], y - mousePos[1] };
+
+	switch (controlState)
+	{
+		// translate the landscape
+	case TRANSLATE:
+		if (leftMouseButton)
+		{
+			// control x,y translation via the left mouse button
+			landTranslate[0] += mousePosDelta[0] * 0.1f;
+			landTranslate[1] -= mousePosDelta[1] * 0.1f;
+		}
+		if (middleMouseButton)
+		{
+			// control z translation via the middle mouse button
+			landTranslate[2] += mousePosDelta[1] * 0.1f;
+		}
+		break;
+
+		// rotate the landscape
+	case ROTATE:
+		if (leftMouseButton)
+		{
+			// control x,y rotation via the left mouse button
+			landRotate[0] += mousePosDelta[1] * 0.1f;
+			landRotate[1] += mousePosDelta[0] * 0.1f;
+		}
+		if (middleMouseButton)
+		{
+			// control z rotation via the middle mouse button
+			landRotate[2] += mousePosDelta[1] * 0.1f;
+		}
+		break;
+
+		// scale the landscape
+	case SCALE:
+		if (leftMouseButton)
+		{
+			// control x,y scaling via the left mouse button
+			landScale[0] *= 1.0f + mousePosDelta[0] * 0.01f;
+			landScale[1] *= 1.0f - mousePosDelta[1] * 0.01f;
+		}
+		if (middleMouseButton)
+		{
+			// control z scaling via the middle mouse button
+			landScale[2] *= 1.0f - mousePosDelta[1] * 0.01f;
+		}
+		break;
+	}
+
+	// store the new mouse position
+	mousePos[0] = x;
+	mousePos[1] = y;
+}
+
+void mouseMotionFunc(int x, int y)
+{
+	// mouse has moved
+	// store the new mouse position
+	mousePos[0] = x;
+	mousePos[1] = y;
+}
+
+void mouseButtonFunc(int button, int state, int x, int y)
+{
+	// a mouse button has has been pressed or depressed
+
+	// keep track of the mouse button state, in leftMouseButton, middleMouseButton, rightMouseButton variables
+	switch (button)
+	{
+	case GLUT_LEFT_BUTTON:
+		leftMouseButton = (state == GLUT_DOWN);
+		break;
+
+	case GLUT_MIDDLE_BUTTON:
+		middleMouseButton = (state == GLUT_DOWN);
+		break;
+
+	case GLUT_RIGHT_BUTTON:
+		rightMouseButton = (state == GLUT_DOWN);
+		break;
+	}
+
+	// keep track of whether CTRL and SHIFT keys are pressed
+	switch (glutGetModifiers())
+	{
+	case GLUT_ACTIVE_CTRL:
+		controlState = TRANSLATE;
+		break;
+
+	case GLUT_ACTIVE_SHIFT:
+		controlState = SCALE;
+		break;
+
+		// if CTRL and SHIFT are not pressed, we are in rotate mode
+	default:
+		controlState = ROTATE;
+		break;
+	}
+
+	// store the new mouse position
+	mousePos[0] = x;
+	mousePos[1] = y;
 }
 
 int main(int argc, char* argv[])
@@ -239,9 +380,16 @@ int main(int argc, char* argv[])
 	glutCreateWindow( "Cube Sample" );
 	init();
 	glutDisplayFunc(display);  
+	glutIdleFunc(idleFunc);
+	// callback for mouse drags
+	glutMotionFunc(mouseMotionDragFunc);
+	// callback for idle mouse movement
+	glutPassiveMotionFunc(mouseMotionFunc);
+	// callback for mouse button changes
+	glutMouseFunc(mouseButtonFunc);
+	// callback for resizing the window
 	glutReshapeFunc(reshape);
 	glutKeyboardFunc(keyboardFunc);
-	glutIdleFunc(idleFunc);
 	glutMainLoop();
 	return 0;
 }
