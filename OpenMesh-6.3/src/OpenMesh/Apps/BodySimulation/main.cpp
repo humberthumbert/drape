@@ -59,6 +59,8 @@
   #include <GLUT/glut.h>
 #endif
 
+#include "Body.h"
+
 // ----------------------------------------------------------------------------
 typedef OpenMesh::PolyMesh_ArrayKernelT<>  MyMesh;
 // ----------------------------------------------------------------------------
@@ -366,6 +368,10 @@ int main(int argc, char* argv[])
 	std::cout << "Vertex #" << *v_it << ": " << mesh.point( *v_it ) << std::endl;
 	}
 	
+
+	// Body
+	Body* body = new Body(mesh, 183);
+
 	// don't need the normals anymore? Remove them!
 	mesh.release_vertex_normals();
 	// just check if it really works

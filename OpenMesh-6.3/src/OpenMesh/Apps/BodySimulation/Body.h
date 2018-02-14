@@ -10,6 +10,7 @@
 #include <functional>
 #include <string>
 #include <stdio.h>
+#include <iostream>
 
 #include "Vector.h"
 typedef OpenMesh::PolyMesh_ArrayKernelT<>  MyMesh;
@@ -30,7 +31,7 @@ private:
 	// iterator through all the vertice and find the highest and lowest point
 	void getModelHeight();
 	// divide the model into 100 sections based on z coord, xy plane
-	std::vector<std::vector<MyMesh::Point> > zSegement(100);
+	std::vector<std::vector<MyMesh::Point> > zSegement = std::vector<std::vector<MyMesh::Point> >(100);
 	// slice the model into 100 section
 	void sliceModel();
 	// x,y,z coordinate (assume z as the upward one with unit vector<0,0,1>)
@@ -61,7 +62,9 @@ public:
 	
 	// setter and getter
 	//void setBody(MyMesh bodyMesh);
-	std::vector<MyMesh::Point> getLandmarks{ return landmarks; }
+	std::vector<MyMesh::Point> getLandmarks(){ return landmarks; }
 	float getHeight(){ return height; }
-	void setHeight(flaot newHeight){ height = newHeight; }
-}
+	void setHeight(float newHeight){ height = newHeight; }
+};
+
+#endif

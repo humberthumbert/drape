@@ -2,14 +2,16 @@
 #include <limits>
 #include <cmath>
 
-final static int MEAN_ANKLE_HEIGHT = 5;
-final static int LEG_DIVISION_CRITIAL_DIST = 5;
-final static float PI = std::atan(1.0)*4;
-final static int ARC_STEP = 12;// 15 degree
+#define MEAN_ANKLE_HEIGHT 5
+#define LEG_DIVISION_CRITIAL_DIST 5
+#define PI 3.1415926
+#define ARC_STEP 12// 15 degree
 Body::Body(MyMesh mesh, float height){
 	bodyMesh = mesh;
-	this.height = height;
+	this->height = height;
 	getModelHeight();
+	sliceModel();
+	bodyDirection();
 }
 //-------------------------Preprocess----------------------------//
 // iterator through all the vertice and find the highest and lowest point
@@ -19,8 +21,8 @@ void Body::getModelHeight(){
 	for(MyMesh::FaceIter f_it = bodyMesh.faces_begin(); f_it != bodyMesh.faces_end(); ++f_it) {
 		for (MyMesh::FaceVertexIter fv_it=bodyMesh.fv_iter(*f_it); fv_it.is_valid(); ++fv_it)
   		{
-	    	if(top < bodyMesh.point(*fv_it)[2]) top = bodyMesh.point(*fv_it);
-	    	if(bottom > bodyMesh.point(*fv_it)[2]) bottom = bodyMesh.point(*fv_it);
+	    	if(top < bodyMesh.point(*fv_it)[2]) top = bodyMesh.point(*fv_it)[2];
+	    	if(bottom > bodyMesh.point(*fv_it)[2]) bottom = bodyMesh.point(*fv_it)[2];
 		}
     }
     modelHeight = std::abs(top-bottom);
@@ -55,7 +57,7 @@ std::vector<std::vector<MyMesh::Point> > Body::getFullDivision(float &k, float c
 		k = std::tan(std::atan(k) + PI/ARC_STEP);
 		b = centerY - k*centerX;
 		bool isFound=false;
-		for(int i = 0; i < ankle.size(); ++i){
+		for(unsigned int i = 0; i < ankle.size(); ++i){
 			// distance = |ax0+by0+c|/sqrt(a^2+b^2)
 			float distance = distPT2Line(ankle[i][0], ankle[i][1], k, b);
 			if(distance < LEG_DIVISION_CRITIAL_DIST * ratio){
@@ -66,7 +68,7 @@ std::vector<std::vector<MyMesh::Point> > Body::getFullDivision(float &k, float c
 		if(!isFound)isSeperated=true;
 	}
 	std::vector<std::vector<MyMesh::Point> > result(2);
-	for(int i = 0; i < ankle.size(); ++i){
+	for(unsigned int i = 0; i < ankle.size(); ++i){
 		if(k*ankle[i][0]-ankle[i][1]+b > 0){
 			result[0].push_back(ankle[i]);
 		} else {
@@ -82,7 +84,7 @@ void Body::bodyDirection(){
 	// First choose ankle section which is 0.05L, and find the center pointof all cross sections points
 	float totalX = 0.0f, totalY = 0.0f;
 	std::vector<MyMesh::Point> ankle = zSegement[MEAN_ANKLE_HEIGHT-1];
-	for(int i = 0; i < ankle.size(); ++i){
+	for(unsigned int i = 0; i < ankle.size(); ++i){
 		totalX += ankle[i][0];
 		totalY += ankle[i][1];
 	}
@@ -92,21 +94,21 @@ void Body::bodyDirection(){
 	float k = slope(ankle[0][0], ankle[0][1], centerX, centerY);
 	std::vector<std::vector<MyMesh::Point> > ankles= getFullDivision(k, centerX, centerY, ankle);
 	// Get the center point of each part of cross section
-	float ankle1X = 0.0f, ankle1X = 0.0f;
-	for(int i = 0; i < ankles[0].size(); ++i){
+	float ankle1X = 0.0f, ankle1Y = 0.0f;
+	for(unsigned int i = 0; i < ankles[0].size(); ++i){
 		ankle1X += ankles[0][i][0];
 		ankle1Y += ankles[0][i][1];
 	}
-	ankle1X /= ankles[0].size;
-	ankle1Y /= ankles[0].size;
+	ankle1X = ankle1X / ankles[0].size();
+	ankle1Y = ankle1Y / ankles[0].size();
 	
-	float ankle2X = 0.0f, ankle2X = 0.0f;
+	float ankle2X = 0.0f, ankle2Y = 0.0f;
 	for(int i = 0; i < ankles[1].size(); ++i){
 		ankle2X += ankles[1][i][0];
 		ankle2Y += ankles[1][i][1];
 	}
-	ankle2X /= ankles[1].size;
-	ankle2Y /= ankles[1].size;
+	ankle2X = ankle2X / ankles[1].size();
+	ankle2Y = ankle2Y / ankles[1].size();
 	// k is the left-right direction line slope and 1/k is the front-bak direction
 	k = slope(ankle1X, ankle1Y, ankle2X, ankle2Y);
 
@@ -114,7 +116,7 @@ void Body::bodyDirection(){
 	std::vector<MyMesh::Point> foot = zSegement[0];
 	MyMesh::Point footTip;
 	float furtherest = std::numeric_limits<float>::min();
-	for(int i = 0; i < foot[i].size(); ++i){
+	for(unsigned int i = 0; i < foot[i].size(); ++i){
 		float dist = distPT2Line(foot[i][0], foot[i][1], k, ankle1Y-k*ankle1X);
 		if(dist > furtherest){
 			furtherest = dist;
@@ -124,10 +126,13 @@ void Body::bodyDirection(){
 	int upward = 1;
 	if(footTip[0]*k + ankle1Y-k*ankle1X - footTip[1] < 0){ upward = -1; }
 
-	yCoord = new Vector3(upward/k, upward, 0);//front direction
+	yCoord = Vector3(upward/k, upward, 0);//front direction
 	k = std::tan(std::atan(upward*k)+PI/2);
-	xCoord = new Vector3(k, 1, 0);// left direction
-	zCoord = new Vector3(0, 0, 1);// up direction
+	xCoord = Vector3(k, 1, 0);// left direction
+	zCoord = Vector3(0, 0, 1);// up direction
+	std::cout << "x coordniate: " << xCoord.m_x << " " << xCoord.m_y << " " << xCoord.m_z << std::endl;
+	std::cout << "y coordniate: " << yCoord.m_x << " " << yCoord.m_y << " " << yCoord.m_z << std::endl;
+	std::cout << "z coordniate: " << zCoord.m_x << " " << zCoord.m_y << " " << zCoord.m_z << std::endl;
 }
 
 //-------------------------Process----------------------------//
