@@ -11,6 +11,7 @@ Body::Body(MyMesh mesh, float height){
 	this->height = height;
 	getModelHeight();
 	sliceModel();
+	std::cout <<"hhhhhh" << std::endl;
 	bodyDirection();
 }
 //-------------------------Preprocess----------------------------//
@@ -26,7 +27,7 @@ void Body::getModelHeight(){
 		}
     }
     modelHeight = std::abs(top-bottom);
-    ratio = modelHeight * height;
+    ratio = modelHeight / height;
 }
 // slice the model into 100 section
 void Body::sliceModel(){
@@ -34,8 +35,9 @@ void Body::sliceModel(){
 	for(MyMesh::FaceIter f_it = bodyMesh.faces_begin(); f_it != bodyMesh.faces_end(); ++f_it) {
 		for (MyMesh::FaceVertexIter fv_it=bodyMesh.fv_iter(*f_it); fv_it.is_valid(); ++fv_it)
   		{
-	    	percentage = std::abs(bodyMesh.point(*fv_it)[2] - bottom) / modelHeight;
+  			percentage = std::abs(bodyMesh.point(*fv_it)[2] - bottom) / modelHeight;
 	    	int z = (int)(percentage*100);
+			if(z == 100) z = 99;
 	    	zSegement[z].push_back(bodyMesh.point(*fv_it));
 		}
     }
@@ -56,16 +58,22 @@ std::vector<std::vector<MyMesh::Point> > Body::getFullDivision(float &k, float c
 	while(!isSeperated){
 		k = std::tan(std::atan(k) + PI/ARC_STEP);
 		b = centerY - k*centerX;
+		std::cout << k <<"x + " << b << " = y" << std::endl;
+		
 		bool isFound=false;
 		for(unsigned int i = 0; i < ankle.size(); ++i){
 			// distance = |ax0+by0+c|/sqrt(a^2+b^2)
 			float distance = distPT2Line(ankle[i][0], ankle[i][1], k, b);
+			std::cout << "Distance is " << distance << " 50*ratio = " << ratio << std::endl;
 			if(distance < LEG_DIVISION_CRITIAL_DIST * ratio){
 				isFound=true;
 				break;
 			}
 		}
-		if(!isFound)isSeperated=true;
+		if(!isFound){
+			isSeperated=true;
+			std::cout << "found! k is " << k << std::endl;
+		}
 	}
 	std::vector<std::vector<MyMesh::Point> > result(2);
 	for(unsigned int i = 0; i < ankle.size(); ++i){
@@ -89,6 +97,7 @@ void Body::bodyDirection(){
 		totalY += ankle[i][1];
 	}
 	float centerX = totalX / ankle.size(), centerY = totalY / ankle.size();
+	std::cout << "Center X = " << centerX << ", Y = " << centerY << std::endl;
 	// Find a line seperating all points into two groups
 	// kx1+b=y1, kx2+b=y2, k=(y1-y2)/(x1-x2), b=y2-(x1-x2)/(y1-y2)
 	float k = slope(ankle[0][0], ankle[0][1], centerX, centerY);
@@ -103,7 +112,7 @@ void Body::bodyDirection(){
 	ankle1Y = ankle1Y / ankles[0].size();
 	
 	float ankle2X = 0.0f, ankle2Y = 0.0f;
-	for(int i = 0; i < ankles[1].size(); ++i){
+	for(unsigned int i = 0; i < ankles[1].size(); ++i){
 		ankle2X += ankles[1][i][0];
 		ankle2Y += ankles[1][i][1];
 	}
@@ -114,7 +123,7 @@ void Body::bodyDirection(){
 
 	// Second, use the foot to identify front and back
 	std::vector<MyMesh::Point> foot = zSegement[0];
-	MyMesh::Point footTip;
+	MyMesh::Point footTip = foot[0];
 	float furtherest = std::numeric_limits<float>::min();
 	for(unsigned int i = 0; i < foot[i].size(); ++i){
 		float dist = distPT2Line(foot[i][0], foot[i][1], k, ankle1Y-k*ankle1X);
