@@ -54,6 +54,7 @@ private:
 	void calSideNeckPT();
 	void calBackNeckPT();
 	void calShoulderPT();
+	void landmarks_deprecated();
 	
 public:
 	Body();

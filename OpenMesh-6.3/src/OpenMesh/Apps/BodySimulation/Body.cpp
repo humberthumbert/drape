@@ -1,6 +1,7 @@
 #include "Body.h"
 #include <limits>
 #include <cmath>
+#include <fstream>
 
 #define MEAN_ANKLE_HEIGHT 5
 #define LEG_DIVISION_CRITIAL_DIST 5
@@ -13,6 +14,7 @@ Body::Body(MyMesh mesh, float height){
 	sliceModel();
 	std::cout <<"hhhhhh" << std::endl;
 	bodyDirection();
+	landmarks_deprecated();
 }
 //-------------------------Preprocess----------------------------//
 // iterator through all the vertice and find the highest and lowest point
@@ -29,6 +31,42 @@ void Body::getModelHeight(){
     modelHeight = std::abs(top-bottom);
     ratio = modelHeight / height;
 }
+
+//first attempt at making a landmark. 
+//DOESN'T GET CLOSE ENOUGH TO THE REQUIRED RESULT
+//DO NOT USE. ONLY FOR REFERENCE
+void Body::landmarks_deprecated(){
+	int ymax = std::numeric_limits<float>::min();
+	int ymin = std::numeric_limits<float>::min();
+	float ymaxpoint[3];
+	float yminpoint[3];
+
+
+	for(MyMesh::FaceIter f_it = bodyMesh.faces_begin(); f_it != bodyMesh.faces_end(); ++f_it) {
+		for (MyMesh::FaceVertexIter fv_it=bodyMesh.fv_iter(*f_it); fv_it.is_valid(); ++fv_it)
+  		{
+	    	if(ymax < bodyMesh.point(*fv_it)[1]) {
+	    		ymax = bodyMesh.point(*fv_it)[1];
+	    		ymaxpoint[0] = bodyMesh.point(*fv_it)[0];
+	    		ymaxpoint[1] = bodyMesh.point(*fv_it)[1];
+	    		ymaxpoint[2] = bodyMesh.point(*fv_it)[2];
+
+	    	}
+	    	if(ymin > bodyMesh.point(*fv_it)[1]) {
+	    		ymin = bodyMesh.point(*fv_it)[1];
+	    		yminpoint[0] = bodyMesh.point(*fv_it)[0];
+	    		yminpoint[1] = bodyMesh.point(*fv_it)[1];
+	    		yminpoint[2] = bodyMesh.point(*fv_it)[2];
+			}
+		}
+    }
+
+    std::ofstream ofile("benchmark.txt");
+    ofile << ymaxpoint[0] << " " << ymaxpoint[1] << " " << ymaxpoint[2] << " (right shoulder)" << std::endl;
+    ofile << yminpoint[0] << " " << yminpoint[1] << " " << yminpoint[2] << " (left shoulder)" << std::endl;
+    ofile.close();
+}
+
 // slice the model into 100 section
 void Body::sliceModel(){
 	float percentage = 0.0f;
