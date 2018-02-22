@@ -27,11 +27,11 @@ private:
 	float ratio;
 	//-------------------------Preprocess----------------------------//
 	// the distance between the highest and lowest point
-	float modelHeight, top, bottom; 
+	double modelHeight, top, bottom; 
 	// iterator through all the vertice and find the highest and lowest point
 	void getModelHeight();
 	// divide the model into 100 sections based on z coord, xy plane
-	std::vector<std::vector<MyMesh::Point> > zSegement = std::vector<std::vector<MyMesh::Point> >(100);
+	std::vector<std::vector<MyMesh::Point> > zSegement = std::vector<std::vector<MyMesh::Point> >(1001);
 	// slice the model into 100 section
 	void sliceModel();
 	// x,y,z coordinate (assume z as the upward one with unit vector<0,0,1>)
@@ -42,7 +42,7 @@ private:
 	// helper function
 	std::vector<std::vector<MyMesh::Point> > getFullDivision(float &k, float centerX, float centerY, std::vector<MyMesh::Point> ankle);
 
-
+	
 	//-------------------------Process----------------------------//
 	// landmark for croctch, armpits, front neck point, side neck point, back neck point, shoulder points.
 	std::vector<MyMesh::Point> landmarks;
@@ -54,13 +54,26 @@ private:
 	void calSideNeckPT();
 	void calBackNeckPT();
 	void calShoulderPT();
-	void landmarks_deprecated();
+	void find_shoulder();
+	void find_chest();
+	void find_hip();
 	
 public:
 	Body();
 	Body(MyMesh mesh, float height);
 	Body(char *filename, float height);
-	
+
+	//NOTE: left and right is respective to the viewer's perspective
+
+	//points for the shoulder
+	float xmaxpoint[3];
+	float xminpoint[3];
+	//points for the chests
+	float leftChestPoint[3];
+	float rightChestPoint[3];
+	//poitns for the hips
+	float leftHipPoint[3];
+	float rightHipPoint[3];
 	// setter and getter
 	//void setBody(MyMesh bodyMesh);
 	std::vector<MyMesh::Point> getLandmarks(){ return landmarks; }
