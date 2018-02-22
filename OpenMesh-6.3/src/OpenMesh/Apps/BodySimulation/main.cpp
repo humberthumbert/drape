@@ -67,7 +67,7 @@ typedef OpenMesh::PolyMesh_ArrayKernelT<>  MyMesh;
 // Build a simple cube and write it to std::cout
 	
 MyMesh mesh;
-
+Body* body;
 // mouse control state
 typedef enum { ROTATE, TRANSLATE, SCALE } CONTROL_STATE;
 CONTROL_STATE controlState = ROTATE;
@@ -88,16 +88,16 @@ void init()
     glShadeModel(GL_SMOOTH);
     glClearColor(.2f, .2f, .4f, .5f);
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_LIGHTING);
-    glEnable(GL_LIGHT0);
-    GLfloat lightpos[] = {2.0, 2.0, 2.0, 0.0};
-    glLightfv(GL_LIGHT0, GL_POSITION, lightpos);
+   // glEnable(GL_LIGHTING);
+   // glEnable(GL_LIGHT0);
+   // GLfloat lightpos[] = {2.0, 2.0, 2.0, 0.0};
+  //  glLightfv(GL_LIGHT0, GL_POSITION, lightpos);
     GLfloat white[] = {0.8f, 0.8f, 0.8f, 1.0f};
     GLfloat cyan[] = {0.f, .8f, .8f, 1.f};
-    glMaterialfv(GL_FRONT, GL_DIFFUSE, cyan);
-    glMaterialfv(GL_FRONT, GL_SPECULAR, white);
-    GLfloat shininess[] = {50};
-    glMaterialfv(GL_FRONT, GL_SHININESS, shininess);
+  //  glMaterialfv(GL_FRONT, GL_DIFFUSE, cyan);
+  //  glMaterialfv(GL_FRONT, GL_SPECULAR, white);
+ //   GLfloat shininess[] = {50};
+ //   glMaterialfv(GL_FRONT, GL_SHININESS, shininess);
 
     // myMesh.request_vertex_normals();
     // myMesh.request_face_normals();
@@ -117,26 +117,29 @@ void init()
 
 void display()
 {
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glMatrixMode(GL_MODELVIEW);  
     glLoadIdentity(); 
-    gluLookAt(2, 0, 2, 0, 0, 0, 0, 1, 0);
+    //glOrtho(-3.0,3.0,-5.0,5.0,-0.1,-10.0);
+
+    gluLookAt(0, 0, 3, 0, 0, 0, 0, 1,0);
     glClear(GL_COLOR_BUFFER_BIT| GL_DEPTH_BUFFER_BIT);
+    glColor4f(1.0,1.0,1.0,0.3);
     glBegin(GL_TRIANGLES);
-    glColor3f(1.0, 1.0, 1.0);
     // Print all the faces
 	for(MyMesh::FaceIter f_it = mesh.faces_begin(); f_it != mesh.faces_end(); ++f_it) {
-		glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
+		glPolygonMode(GL_FRONT_AND_BACK,GL_POINT);
     
 		for (MyMesh::FaceVertexIter fv_it=mesh.fv_iter(*f_it); fv_it.is_valid(); ++fv_it)
   		{
 	    	// do something with e.g. mesh.point(*vv_it)
 	    	// rotate x
-	    	float sin_t = sin(landRotate[1]);
-   			float cos_t = cos(landRotate[1]);
+	    	//float sin_t = sin(landRotate[1]);
+   			//float cos_t = cos(landRotate[1]);
    			float x = mesh.point(*fv_it)[0]; float y = mesh.point(*fv_it)[1]; float z = mesh.point(*fv_it)[2];
-			y = y * cos_t - z * sin_t;
-        	z = z * cos_t + y * sin_t;
+			//y = y * cos_t - z * sin_t;
+        	//z = z * cos_t + y * sin_t;
         	// rotate y
         	//sin_t = sin(landRotate[0]);
    			//cos_t = cos(landRotate[0]);
@@ -151,7 +154,11 @@ void display()
 			//glVertex3f(mesh.point(*fv_it)[0], mesh.point(*fv_it)[1], mesh.point(*fv_it)[2]);
 			glVertex3f(x, y, z);    	
 		}
+
     }
+
+    
+    // glVertex3f(1, 0, -1);
 	
     /*MyMesh::VertexIter v_it, v_end(mesh.vertices_end());
     for (v_it=mesh.vertices_begin(); v_it!=v_end; ++v_it){
@@ -180,9 +187,20 @@ void display()
 
     }*/
     glEnd(); 
+    glPointSize(15.0);
+    glBegin(GL_POINTS);
+	glColor3f(1.0,0.0,0.0);
 
 
+    glVertex3f(body->xmaxpoint[0], body->xmaxpoint[1] , body->xmaxpoint[2] );
+    glVertex3f(body->xminpoint[0], body->xminpoint[1] , body->xminpoint[2] );
+    glVertex3f(body->leftChestPoint[0], body->leftChestPoint[1] , body->leftChestPoint[2] );
+    glVertex3f(body->rightChestPoint[0], body->rightChestPoint[1] , body->rightChestPoint[2] );
+    glVertex3f(body->leftHipPoint[0], body->leftHipPoint[1] , body->leftHipPoint[2] );
+    glVertex3f(body->rightHipPoint[0], body->rightHipPoint[1] , body->rightHipPoint[2] );
 
+    glVertex3f(0, 0 , 3);
+    glEnd();
     glutSwapBuffers();
     
 }
@@ -205,7 +223,7 @@ void idleFunc()
 
 void reshape(int w, int h)  
 {
-    std::cout<<"Before Reshape"<<std::endl;
+//    std::cout<<"Before Reshape"<<std::endl;
 
     glViewport(0, 0, w, h);
     glMatrixMode(GL_PROJECTION); 
@@ -214,7 +232,7 @@ void reshape(int w, int h)
         gluPerspective (80, (float)w,1.0,5000.0);
     else
         gluPerspective (80, (float)w /( float )h,1.0,5000.0 );
-    std::cout<<"After Reshape"<<std::endl;
+ //   std::cout<<"After Reshape"<<std::endl;
 
 }
 
@@ -370,7 +388,7 @@ int main(int argc, char* argv[])
 	
 
 	// Body
-	Body* body = new Body(mesh, 183);
+	body = new Body(mesh, 183);
 
 	// don't need the normals anymore? Remove them!
 	mesh.release_vertex_normals();

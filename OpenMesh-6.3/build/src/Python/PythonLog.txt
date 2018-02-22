@@ -4,7 +4,7 @@ INCLUDE_DIRECTORIES: /usr/include/python2.7;/usr/include
 LINK_DIRECTORIES: /usr/lib/x86_64-linux-gnu
 LINK_LIBRARIES: /usr/lib/x86_64-linux-gnu/libpython2.7.so;/usr/lib/x86_64-linux-gnu/libboost_python-py27.so
 
-Change Dir: /home/lifan/drape/OpenMesh-6.3/build/src/Python
+Change Dir: /home/student/Documents/drape/OpenMesh-6.3/build/src/Python
 
 Run Build Command:"/usr/bin/make"
 Scanning dependencies of target example

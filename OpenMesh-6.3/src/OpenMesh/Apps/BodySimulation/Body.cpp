@@ -13,8 +13,19 @@ Body::Body(MyMesh mesh, float height){
 	getModelHeight();
 	sliceModel();
 	std::cout <<"hhhhhh" << std::endl;
-	bodyDirection();
-	landmarks_deprecated();
+	//bodyDirection();
+	find_shoulder();
+	find_hip();
+	find_chest();
+	std::ofstream ofile("benchmark.txt");
+	ofile << xminpoint[0] << " " << xminpoint[1] << " " << xminpoint[2] << " (left shoulder)" << std::endl;
+    ofile << xmaxpoint[0] << " " << xmaxpoint[1] << " " << xmaxpoint[2] << " (right shoulder)" << std::endl;
+    ofile << leftHipPoint[0] << " " << leftHipPoint[1] << " " << leftHipPoint[2] << " (left chest)" << std::endl;
+    ofile << rightHipPoint[0] << " " << rightHipPoint[1] << " " << rightHipPoint[2] << " (right chest)" << std::endl;
+	ofile << leftChestPoint[0] << " " << leftChestPoint[1] << " " << leftChestPoint[2] << " (left chest)" << std::endl;
+    ofile << rightChestPoint[0] << " " << rightChestPoint[1] << " " << rightChestPoint[2] << " (right chest)" << std::endl;
+
+    ofile.close();
 }
 //-------------------------Preprocess----------------------------//
 // iterator through all the vertice and find the highest and lowest point
@@ -24,58 +35,194 @@ void Body::getModelHeight(){
 	for(MyMesh::FaceIter f_it = bodyMesh.faces_begin(); f_it != bodyMesh.faces_end(); ++f_it) {
 		for (MyMesh::FaceVertexIter fv_it=bodyMesh.fv_iter(*f_it); fv_it.is_valid(); ++fv_it)
   		{
-	    	if(top < bodyMesh.point(*fv_it)[2]) top = bodyMesh.point(*fv_it)[2];
-	    	if(bottom > bodyMesh.point(*fv_it)[2]) bottom = bodyMesh.point(*fv_it)[2];
+	    	if(top < bodyMesh.point(*fv_it)[1]) top = bodyMesh.point(*fv_it)[1];
+	    	if(bottom > bodyMesh.point(*fv_it)[1]) bottom = bodyMesh.point(*fv_it)[1];
 		}
     }
     modelHeight = std::abs(top-bottom);
     ratio = modelHeight / height;
 }
 
-//first attempt at making a landmark. 
-//DOESN'T GET CLOSE ENOUGH TO THE REQUIRED RESULT
-//DO NOT USE. ONLY FOR REFERENCE
-void Body::landmarks_deprecated(){
-	int ymax = std::numeric_limits<float>::min();
-	int ymin = std::numeric_limits<float>::min();
-	float ymaxpoint[3];
-	float yminpoint[3];
+//finds the shoulders, defined as the points with the 
+//maximum and minimum x values in the 806th slice
+void Body::find_shoulder(){
+	
+	float xmax = std::numeric_limits<float>::min();
+	float xmin = std::numeric_limits<float>::max();
+	//find shoulder
+	std::vector<MyMesh::Point> points = zSegement[806];
+	for (int i = 0; i < points.size(); ++i){
+		if(xmax < points[i][0]) {
+    		xmax = points[i][0];
+    		xmaxpoint[0] = points[i][0];
+    		xmaxpoint[1] = points[i][1];
+    		xmaxpoint[2] = points[i][2];
+
+    	}
+    	if(xmin > points[i][0]) {
+    		xmin = points[i][0];
+    		xminpoint[0] = points[i][0];
+    		xminpoint[1] = points[i][1];
+    		xminpoint[2] = points[i][2];
+		}
+	}
+        
+
+}
 
 
-	for(MyMesh::FaceIter f_it = bodyMesh.faces_begin(); f_it != bodyMesh.faces_end(); ++f_it) {
-		for (MyMesh::FaceVertexIter fv_it=bodyMesh.fv_iter(*f_it); fv_it.is_valid(); ++fv_it)
-  		{
-	    	if(ymax < bodyMesh.point(*fv_it)[1]) {
-	    		ymax = bodyMesh.point(*fv_it)[1];
-	    		ymaxpoint[0] = bodyMesh.point(*fv_it)[0];
-	    		ymaxpoint[1] = bodyMesh.point(*fv_it)[1];
-	    		ymaxpoint[2] = bodyMesh.point(*fv_it)[2];
+void Body::find_hip(){
+	float xmax = std::numeric_limits<float>::min();
+	float xmin = std::numeric_limits<float>::max();
+	
+	
+	std::vector<MyMesh::Point> points = zSegement[480];
 
-	    	}
-	    	if(ymin > bodyMesh.point(*fv_it)[1]) {
-	    		ymin = bodyMesh.point(*fv_it)[1];
-	    		yminpoint[0] = bodyMesh.point(*fv_it)[0];
-	    		yminpoint[1] = bodyMesh.point(*fv_it)[1];
-	    		yminpoint[2] = bodyMesh.point(*fv_it)[2];
+	for (int i = 0; i < points.size(); ++i){
+		if(xmax < points[i][0]) {
+    		xmax = points[i][0];
+    	}
+    	if(xmin > points[i][0]) {
+    		xmin = points[i][0];
+		}
+	}
+	float totalWidth = std::abs(xmax - xmin);
+
+	std::vector<std::vector<MyMesh::Point> > xSlices = std::vector<std::vector<MyMesh::Point> >(100);
+
+	//slice in x
+	for(int i = 0; i < points.size(); ++i){
+		float percentage = std::abs(points[i][0] - xmin) / totalWidth;
+		int index = round(percentage * 100);
+		if(index >= 100){
+			index = 99;
+		}
+		xSlices[index].push_back(points[i]);
+	}
+
+	for(int i = 0; i < xSlices.size(); ){
+		for(int j = 0; j < 10 && i < xSlices.size(); ++j){
+			std::cout << xSlices[i].size() << " ";
+			++i;
+		}
+		std::cout << std::endl;
+	}
+
+	int consecutiveRowsZero = 0;
+	int posIndex = 0;
+	//go in positive direction
+	for(int i = 50; i < 101; ++i){
+		if(xSlices[i].size() == 0){
+			consecutiveRowsZero++;
+		}else{
+			consecutiveRowsZero = 0;
+		}
+
+		if(consecutiveRowsZero > 10){
+			posIndex = i - consecutiveRowsZero;
+			break;
+		}
+	}
+
+	consecutiveRowsZero = 0;
+	int negIndex = 0;
+	//go in negative direction
+	for(int i = 50; i > -1; --i){
+		if(xSlices[i].size() == 0){
+			consecutiveRowsZero++;
+		}else{
+			consecutiveRowsZero = 0;
+		}
+
+		if(consecutiveRowsZero > 10){
+			negIndex = i + consecutiveRowsZero;
+			break;
+		}
+	}
+
+	std::vector<MyMesh::Point>& leftPoints = xSlices[negIndex];
+	xmin = std::numeric_limits<float>::max();
+	for (int i = 0; i < leftPoints.size(); ++i){
+    	if(xmin > leftPoints[i][0]) {
+    		xmin = leftPoints[i][0];
+    		leftHipPoint[0] = leftPoints[i][0];
+    		leftHipPoint[1] = leftPoints[i][1];
+    		leftHipPoint[2] = leftPoints[i][2];
+		}
+	}
+
+	std::vector<MyMesh::Point>& rightPoints = xSlices[posIndex];
+	xmax = std::numeric_limits<float>::min();
+	for (int i = 0; i < rightPoints.size(); ++i){
+    	if(xmax < rightPoints[i][0]) {
+    		xmax = rightPoints[i][0];
+    		rightHipPoint[0] = rightPoints[i][0];
+    		rightHipPoint[1] = rightPoints[i][1];
+    		rightHipPoint[2] = rightPoints[i][2];
+		}
+	}
+}
+//find hip must be called before this method
+//because it's assumed that the armpit x coordinates
+//is roughly the same as the hips coordinate, and
+//this is an approximation of the chests as being at the
+//mid point between each sides of the body and the center 
+//of the body
+void Body::find_chest(){
+	float zmax = std::numeric_limits<float>::min();
+	float zmin = std::numeric_limits<float>::max();
+
+	std::vector<MyMesh::Point> points = zSegement[712];
+	//find mid point of z
+	for (int i = 0; i < points.size(); ++i){
+		if(zmax < points[i][2]) {
+    		zmax = points[i][2];
+    	}
+    	if(zmin > points[i][2]) {
+    		zmin = points[i][2];
+		}
+	}
+	float midZ = zmin + (std::abs(zmax - zmin) / 2.0);
+	
+	float width = std::abs(leftHipPoint[0] - rightHipPoint[0]);
+	float chestDistance = width / 4;
+	float leftChestX = leftHipPoint[0] + chestDistance;
+	float rightChestX = rightHipPoint[0] - chestDistance;
+
+	float leftChestMinDistance = std::numeric_limits<float>::max();
+	float rightChestMinDistance = std::numeric_limits<float>::max();
+
+	for(int i = 0; i < points.size(); ++i){
+		if(points[i][2] > midZ){
+			float distanceFromLeft = std::abs(points[i][0] - leftChestX);
+			float distanceFromRight = std::abs(points[i][0] - rightChestX);
+
+			if(distanceFromLeft < leftChestMinDistance){
+				leftChestMinDistance = distanceFromLeft;
+				leftChestPoint[0] = points[i][0];
+	    		leftChestPoint[1] = points[i][1];
+	    		leftChestPoint[2] = points[i][2];
+			}
+
+			if(distanceFromRight < rightChestMinDistance){
+				rightChestMinDistance = distanceFromRight;
+				rightChestPoint[0] = points[i][0];
+	    		rightChestPoint[1] = points[i][1];
+	    		rightChestPoint[2] = points[i][2];
 			}
 		}
-    }
-
-    std::ofstream ofile("benchmark.txt");
-    ofile << ymaxpoint[0] << " " << ymaxpoint[1] << " " << ymaxpoint[2] << " (right shoulder)" << std::endl;
-    ofile << yminpoint[0] << " " << yminpoint[1] << " " << yminpoint[2] << " (left shoulder)" << std::endl;
-    ofile.close();
+	}
 }
 
 // slice the model into 100 section
 void Body::sliceModel(){
-	float percentage = 0.0f;
+	double percentage = 0.0f;
 	for(MyMesh::FaceIter f_it = bodyMesh.faces_begin(); f_it != bodyMesh.faces_end(); ++f_it) {
 		for (MyMesh::FaceVertexIter fv_it=bodyMesh.fv_iter(*f_it); fv_it.is_valid(); ++fv_it)
   		{
-  			percentage = std::abs(bodyMesh.point(*fv_it)[2] - bottom) / modelHeight;
-	    	int z = (int)(percentage*100);
-			if(z == 100) z = 99;
+  			percentage = std::abs(bodyMesh.point(*fv_it)[1] - bottom) / modelHeight;
+	    	int z = (int)(floor(percentage*1000)) ;
+	    //	if (z == 1000) z = 999;
 	    	zSegement[z].push_back(bodyMesh.point(*fv_it));
 		}
     }
