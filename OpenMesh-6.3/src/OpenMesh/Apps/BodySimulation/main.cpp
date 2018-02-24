@@ -67,7 +67,7 @@ typedef OpenMesh::PolyMesh_ArrayKernelT<>  MyMesh;
 // Build a simple cube and write it to std::cout
 	
 MyMesh mesh;
-
+Body* body;
 // mouse control state
 typedef enum { ROTATE, TRANSLATE, SCALE } CONTROL_STATE;
 CONTROL_STATE controlState = ROTATE;
@@ -86,9 +86,9 @@ float landScale[3] = { 1.0f, 1.0f, 1.0f };
 void init()
 {
     glShadeModel(GL_SMOOTH);
-    glClearColor(.2f, .2f, .4f, .5f);
+    //glClearColor(.2f, .2f, .4f, .5f);
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_LIGHTING);
+    /*glEnable(GL_LIGHTING);
     glEnable(GL_LIGHT0);
     GLfloat lightpos[] = {2.0, 2.0, 2.0, 0.0};
     glLightfv(GL_LIGHT0, GL_POSITION, lightpos);
@@ -98,87 +98,97 @@ void init()
     glMaterialfv(GL_FRONT, GL_SPECULAR, white);
     GLfloat shininess[] = {50};
     glMaterialfv(GL_FRONT, GL_SHININESS, shininess);
+*/
 
-    // myMesh.request_vertex_normals();
-    // myMesh.request_face_normals();
-    // IO::Options myOption = optind;
-    // myOption+= IO::Options::VertexNormal;
-    // myOption+= IO::Options::FaceNormal;
-    // std::cout<<"VN? "<< myOption.check(IO::Options::VertexNormal) <<std::endl;
-    // // myOption+= IO::Options::VertexTexCoord;
-    // bool success = IO::read_mesh( myMesh, "arm_16k.ply", myOption);
-    // myMesh.update_normals();
-    // std::cout<<success<<std::endl;
-
-    // //Initializtin collision check;
-    // mBody.init(myMesh);
 }
-
+void rotate(float& x, float& y, float& z){
+	// rotate x
+	float sin_t = sin(landRotate[0]);
+   	float cos_t = cos(landRotate[0]);
+   	y = y * cos_t - z * sin_t;
+    z = z * cos_t + y * sin_t;
+    // rotate y
+    sin_t = sin(landRotate[1]);
+   	cos_t = cos(landRotate[1]);
+   	x = x * cos_t - z * sin_t;
+    z = z * cos_t + x * sin_t;
+    // rotate z
+    sin_t = sin(landRotate[2]);
+   	cos_t = cos(landRotate[2]);
+   	x = x * cos_t - y * sin_t;
+    y = y * cos_t + x * sin_t;    
+}
 
 void display()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glMatrixMode(GL_MODELVIEW);  
     glLoadIdentity(); 
-    gluLookAt(2, 0, 2, 0, 0, 0, 0, 1, 0);
+    gluLookAt(0, 0, 4, 0, 0, 0, 0, 1, 0);
     glClear(GL_COLOR_BUFFER_BIT| GL_DEPTH_BUFFER_BIT);
-    glBegin(GL_TRIANGLES);
-    glColor3f(1.0, 1.0, 1.0);
     // Print all the faces
+    glBegin(GL_TRIANGLES);
+
+    glColor3f(0.0, 1.0, 0.0);
+    mesh = body->getBody();
 	for(MyMesh::FaceIter f_it = mesh.faces_begin(); f_it != mesh.faces_end(); ++f_it) {
-		glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
-    
+		
 		for (MyMesh::FaceVertexIter fv_it=mesh.fv_iter(*f_it); fv_it.is_valid(); ++fv_it)
   		{
-	    	// do something with e.g. mesh.point(*vv_it)
-	    	// rotate x
-	    	float sin_t = sin(landRotate[1]);
-   			float cos_t = cos(landRotate[1]);
-   			float x = mesh.point(*fv_it)[0]; float y = mesh.point(*fv_it)[1]; float z = mesh.point(*fv_it)[2];
-			y = y * cos_t - z * sin_t;
-        	z = z * cos_t + y * sin_t;
-        	// rotate y
-        	//sin_t = sin(landRotate[0]);
-   			//cos_t = cos(landRotate[0]);
-   			//x = x * cos_t - z * sin_t;
-        	//z = z * cos_t + x * sin_t;
-        	// rotate z
-        	//sin_t = sin(landRotate[2]);
-   			//cos_t = cos(landRotate[2]);
-   			//x = x * cos_t - y * sin_t;
-       		//y = y * cos_t + x * sin_t;
-        
+	    	// do something with e.g. mesh.point(*fv_it)
+	    	float x = mesh.point(*fv_it)[0]; float y = mesh.point(*fv_it)[1]; float z = mesh.point(*fv_it)[2];
+	    	rotate(x, y, z);
 			//glVertex3f(mesh.point(*fv_it)[0], mesh.point(*fv_it)[1], mesh.point(*fv_it)[2]);
 			glVertex3f(x, y, z);    	
 		}
     }
+    glEnd();
 	
-    /*MyMesh::VertexIter v_it, v_end(mesh.vertices_end());
-    for (v_it=mesh.vertices_begin(); v_it!=v_end; ++v_it){
-    	glVertex3f(mesh.point(*v_it)[0], mesh.point(*v_it)[1], mesh.point(*v_it)[2]);
-    	++v_it;
-    	bool end = false;
-    	if(v_it==v_end){
-    		v_it = mesh.vertices_begin();
-    		end = true;
-    	}
-    	glVertex3f(mesh.point(*v_it)[0], mesh.point(*v_it)[1], mesh.point(*v_it)[2]);
-    	if(end){
-    		break;
-    	}
-    	--v_it;
-    	std::cerr << mesh.point(*v_it) << std::endl;
-    
-	}
-	*/
-/*    for (unsigned int x = 0; x < faces.size(); ++x)
-    {
-        glVertex3f(faces[x].points[0]->getPos().m_x, faces[x].points[0]->getPos().m_y, faces[x].points[0]->getPos().m_z);
-        glVertex3f(faces[x].points[1]->getPos().m_x, faces[x].points[1]->getPos().m_y, faces[x].points[1]->getPos().m_z);
-        glVertex3f(faces[x].points[2]->getPos().m_x, faces[x].points[2]->getPos().m_y, faces[x].points[2]->getPos().m_z);
-  
 
-    }*/
+    glBegin(GL_LINES);
+    glColor3f(1.0, 0.0, 0.0);
+    std::vector<MyMesh::Point> landmarks = body->getLandmarks();
+    for(unsigned i = 0; i < landmarks.size();i++){
+	    float x = landmarks[i][0], y = landmarks[i][1], z = landmarks[i][2];
+	    rotate(x, y, z);
+	    glVertex3f(x, y, z);
+	   	x = 0; y = -10; z = 0;
+	   	rotate(x, y, z);
+	    glVertex3f(x, y, z);
+	}/*
+	for(unsigned i = 0; i < body->getXSegment(20).size(); i++){
+	    float x = body->getXSegment(20)[i][0], y = body->getXSegment(20)[i][1], z = body->getXSegment(20)[i][2];
+	    rotate(x, y, z);
+	    glVertex3f(x, y, z);
+	   	x = 0; y = -10; z = 0;
+	   	rotate(x, y, z);
+	    glVertex3f(x, y, z);	
+	}
+
+	for(unsigned i = 0; i < body->getXSegment(80).size(); i++){
+	    float x = body->getXSegment(80)[i][0], y = body->getXSegment(80)[i][1], z = body->getXSegment(80)[i][2];
+	    rotate(x, y, z);
+	    glVertex3f(x, y, z);
+	   	x = 0; y = -10; z = 0;
+	   	rotate(x, y, z);
+	    glVertex3f(x, y, z);	
+	}
+	for(unsigned i = 0; i < body->getYSegment(65).size(); i++){
+	    float x = body->getYSegment(65)[i][0], y = body->getYSegment(65)[i][1], z = body->getYSegment(65)[i][2];
+	    rotate(x, y, z);
+	    glVertex3f(x, y, z);
+	   	x = 0; y = 0; z = -10;
+	   	rotate(x, y, z);
+	    glVertex3f(x, y, z);	
+	}
+	for(unsigned i = 0; i < body->getYSegment(80).size(); i++){
+	    float x = body->getYSegment(80)[i][0], y = body->getYSegment(80)[i][1], z = body->getYSegment(80)[i][2];
+	    rotate(x, y, z);
+	    glVertex3f(x, y, z);
+	   	x = 0; y = 0; z = -10;
+	   	rotate(x, y, z);
+	    glVertex3f(x, y, z);	
+	}*/
     glEnd(); 
 
 
@@ -248,13 +258,13 @@ void mouseMotionDragFunc(int x, int y)
 		if (leftMouseButton)
 		{
 			// control x,y rotation via the left mouse button
-			landRotate[0] += mousePosDelta[1] * 0.1f;
-			landRotate[1] += mousePosDelta[0] * 0.1f;
+			landRotate[0] += mousePosDelta[1] * 0.01f;
+			landRotate[1] += mousePosDelta[0] * 0.01f;
 		}
 		if (middleMouseButton)
 		{
 			// control z rotation via the middle mouse button
-			landRotate[2] += mousePosDelta[1] * 0.1f;
+			landRotate[2] += mousePosDelta[1] * 0.01f;
 		}
 		break;
 
@@ -361,16 +371,9 @@ int main(int argc, char* argv[])
     	// dispose the face normals, as we don't need them anymore
     	mesh.release_face_normals();
 	}
-	// Print all the vertice
-	for (MyMesh::VertexIter v_it = mesh.vertices_begin();
-		v_it != mesh.vertices_end(); ++v_it)
-	{
-	std::cout << "Vertex #" << *v_it << ": " << mesh.point( *v_it ) << std::endl;
-	}
 	
-
 	// Body
-	Body* body = new Body(mesh, 183);
+	body = new Body(mesh, 183);
 
 	// don't need the normals anymore? Remove them!
 	mesh.release_vertex_normals();
@@ -399,86 +402,3 @@ int main(int argc, char* argv[])
 	glutMainLoop();
 	return 0;
 }
-
-/*
-int main(int argc, char* argv[])
-{
-	// generate vertices
-	MyMesh::VertexHandle vhandle[8];
-	vhandle[0] = mesh.add_vertex(MyMesh::Point(-100, -100,  100));
-	vhandle[1] = mesh.add_vertex(MyMesh::Point( 100, -100,  100));
-	vhandle[2] = mesh.add_vertex(MyMesh::Point( 100,  100,  100));
-	vhandle[3] = mesh.add_vertex(MyMesh::Point(-100,  100,  100));
-	vhandle[4] = mesh.add_vertex(MyMesh::Point(-100, -100, -100));
-	vhandle[5] = mesh.add_vertex(MyMesh::Point( 100, -100, -100));
-	vhandle[6] = mesh.add_vertex(MyMesh::Point( 100,  100, -100));
-	vhandle[7] = mesh.add_vertex(MyMesh::Point(-100,  100, -100));
-
-	std::vector<MyMesh::VertexHandle>  face_vhandles;
-	// generate (quadrilateral) faces
-	face_vhandles.clear();
-	face_vhandles.push_back(vhandle[0]);
-	face_vhandles.push_back(vhandle[1]);
-	face_vhandles.push_back(vhandle[2]);
-	face_vhandles.push_back(vhandle[3]);
-	mesh.add_face(face_vhandles);
- 
-	face_vhandles.clear();
-	face_vhandles.push_back(vhandle[7]);
-	face_vhandles.push_back(vhandle[6]);
-	face_vhandles.push_back(vhandle[5]);
-	face_vhandles.push_back(vhandle[4]);
-	mesh.add_face(face_vhandles);
-	face_vhandles.clear();
-	face_vhandles.push_back(vhandle[1]);
-	face_vhandles.push_back(vhandle[0]);
-	face_vhandles.push_back(vhandle[4]);
-	face_vhandles.push_back(vhandle[5]);
-	mesh.add_face(face_vhandles);
-	face_vhandles.clear();
-	face_vhandles.push_back(vhandle[2]);
-	face_vhandles.push_back(vhandle[1]);
-	face_vhandles.push_back(vhandle[5]);
-	face_vhandles.push_back(vhandle[6]);
-	mesh.add_face(face_vhandles);
-	face_vhandles.clear();
-	face_vhandles.push_back(vhandle[3]);
-	face_vhandles.push_back(vhandle[2]);
-	face_vhandles.push_back(vhandle[6]);
-	face_vhandles.push_back(vhandle[7]);
-	mesh.add_face(face_vhandles);
-	face_vhandles.clear();
-	face_vhandles.push_back(vhandle[0]);
-	face_vhandles.push_back(vhandle[3]);
-	face_vhandles.push_back(vhandle[7]);
-	face_vhandles.push_back(vhandle[4]);
-	mesh.add_face(face_vhandles);
-	// write mesh to output.obj
-	try
-	{
-		if ( !OpenMesh::IO::write_mesh(mesh, "output.off") )
-		{
-			std::cerr << "Cannot write mesh to file 'output.off'" << std::endl;
-			return 1;
-		} else {
-			glutInit(&argc,argv);
-			glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH ); 
-			glutInitWindowSize( 1280, 720 ); 
-			glutCreateWindow( "Cube Sample" );
-			init();
-
-			glutDisplayFunc(display);  
-			glutReshapeFunc(reshape);
-			glutKeyboardFunc(keyboardFunc);
-			glutIdleFunc(idleFunc);
-			glutMainLoop();
-
-		}
-	}
-	catch( std::exception& x )
-	{
-	std::cerr << x.what() << std::endl;
-	return 1;
-	}
-	return 0;
-}*/
