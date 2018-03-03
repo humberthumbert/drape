@@ -1,49 +1,3 @@
-/* ========================================================================= *
- *                                                                           *
- *                               OpenMesh                                    *
- *           Copyright (c) 2001-2015, RWTH-Aachen University                 *
- *           Department of Computer Graphics and Multimedia                  *
- *                          All rights reserved.                             *
- *                            www.openmesh.org                               *
- *                                                                           *
- *---------------------------------------------------------------------------*
- * This file is part of OpenMesh.                                            *
- *---------------------------------------------------------------------------*
- *                                                                           *
- * Redistribution and use in source and binary forms, with or without        *
- * modification, are permitted provided that the following conditions        *
- * are met:                                                                  *
- *                                                                           *
- * 1. Redistributions of source code must retain the above copyright notice, *
- *    this list of conditions and the following disclaimer.                  *
- *                                                                           *
- * 2. Redistributions in binary form must reproduce the above copyright      *
- *    notice, this list of conditions and the following disclaimer in the    *
- *    documentation and/or other materials provided with the distribution.   *
- *                                                                           *
- * 3. Neither the name of the copyright holder nor the names of its          *
- *    contributors may be used to endorse or promote products derived from   *
- *    this software without specific prior written permission.               *
- *                                                                           *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS       *
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED *
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A           *
- * PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER *
- * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,  *
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,       *
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR        *
- * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF    *
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING      *
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS        *
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.              *
- *                                                                           *
- * ========================================================================= */
-/*===========================================================================*\
- *                                                                           *
- *   $Revision$                                                         *
- *   $Date$                   *
- *                                                                           *
-\*===========================================================================*/
 #include <iostream>
 // -------------------- OpenMesh
 #include <OpenMesh/Core/IO/MeshIO.hh>
@@ -67,6 +21,7 @@ typedef OpenMesh::PolyMesh_ArrayKernelT<>  MyMesh;
 // Build a simple cube and write it to std::cout
 	
 MyMesh mesh;
+MyMesh clothmesh;
 Body* body;
 // mouse control state
 typedef enum { ROTATE, TRANSLATE, SCALE } CONTROL_STATE;
@@ -118,7 +73,11 @@ void rotate(float& x, float& y, float& z){
    	x = x * cos_t - y * sin_t;
     y = y * cos_t + x * sin_t;    
 }
-
+void translate(float& x, float& y, float& z){
+	x += landTranslate[0];
+	y += landTranslate[1];
+	z += landTranslate[2];
+}
 void display()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -130,6 +89,16 @@ void display()
     glBegin(GL_TRIANGLES);
 
     glColor3f(0.0, 1.0, 0.0);
+	for(MyMesh::FaceIter f_it = clothmesh.faces_begin(); f_it != clothmesh.faces_end(); ++f_it) {
+		
+		for (MyMesh::FaceVertexIter fv_it=clothmesh.fv_iter(*f_it); fv_it.is_valid(); ++fv_it)
+  		{
+	    	float x = clothmesh.point(*fv_it)[0]; float y = clothmesh.point(*fv_it)[1]; float z = clothmesh.point(*fv_it)[2];
+	    	translate(x, y , z);
+	    	rotate(x, y, z);
+			glVertex3f(x, y, z);    	
+		}
+    }
     mesh = body->getBody();
 	for(MyMesh::FaceIter f_it = mesh.faces_begin(); f_it != mesh.faces_end(); ++f_it) {
 		
@@ -137,11 +106,11 @@ void display()
   		{
 	    	// do something with e.g. mesh.point(*fv_it)
 	    	float x = mesh.point(*fv_it)[0]; float y = mesh.point(*fv_it)[1]; float z = mesh.point(*fv_it)[2];
+	    	translate(x, y , z);
 	    	rotate(x, y, z);
-			//glVertex3f(mesh.point(*fv_it)[0], mesh.point(*fv_it)[1], mesh.point(*fv_it)[2]);
 			glVertex3f(x, y, z);    	
 		}
-    }
+    } 
     glEnd();
 	
 
@@ -150,13 +119,14 @@ void display()
     std::vector<MyMesh::Point> landmarks = body->getLandmarks();
     for(unsigned i = 0; i < landmarks.size();i++){
 	    float x = landmarks[i][0], y = landmarks[i][1], z = landmarks[i][2];
+	    translate(x, y , z);
 	    rotate(x, y, z);
-	    glVertex3f(x, y, z);
-	   	x = 0; y = -10; z = 0;
-	   	rotate(x, y, z);
-	    glVertex3f(x, y, z);
-	}/*
-	for(unsigned i = 0; i < body->getXSegment(20).size(); i++){
+	    glPushMatrix();
+    	    glTranslated(x,y,z);
+        	glutSolidSphere(0.04,50,50);
+    	glPopMatrix();
+	}
+	/*for(unsigned i = 0; i < body->getXSegment(20).size(); i++){
 	    float x = body->getXSegment(20)[i][0], y = body->getXSegment(20)[i][1], z = body->getXSegment(20)[i][2];
 	    rotate(x, y, z);
 	    glVertex3f(x, y, z);
@@ -341,7 +311,7 @@ void mouseButtonFunc(int button, int state, int x, int y)
 
 int main(int argc, char* argv[])
 {
-	if (argc!=2)
+	if (argc!=3)
 	{
 		std::cerr << "Usage: " << argv[0] << " <input>\n";
 		return 1;
@@ -355,11 +325,14 @@ int main(int argc, char* argv[])
 		std::cerr << "ERROR: Standard vertex property 'Normals' not available!\n";
 		return 1;
 	}
-	OpenMesh::IO::Options opt;
+	OpenMesh::IO::Options opt, clothopt;
 	if ( ! OpenMesh::IO::read_mesh(mesh,argv[1], opt))
 	{
     	std::cerr << "Error loading mesh from file " << argv[1] << std::endl;
 		return 1;
+	} else if ( ! OpenMesh::IO::read_mesh(clothmesh, argv[2], clothopt))
+	{
+		std::cerr << "Error loading cloth mesh fromt file " << argv[2] << std::endl;
 	}
 	// If the file did not provide vertex normals, then calculate them
 	if ( !opt.check( OpenMesh::IO::Options::VertexNormal ) )
@@ -370,19 +343,31 @@ int main(int argc, char* argv[])
     	mesh.update_normals();
     	// dispose the face normals, as we don't need them anymore
     	mesh.release_face_normals();
+	} else 	if ( !clothopt.check( OpenMesh::IO::Options::VertexNormal ) )
+	{
+    	clothmesh.request_face_normals();
+    	clothmesh.update_normals();
+    	clothmesh.release_face_normals();
 	}
 	
 	// Body
 	body = new Body(mesh, 183);
+	// Cloth
 
 	// don't need the normals anymore? Remove them!
 	mesh.release_vertex_normals();
+	clothmesh.release_vertex_normals();
 	// just check if it really works
 	if (mesh.has_vertex_normals())
 	{
-	  std::cerr << "Ouch! ERROR! Shouldn't have any vertex normals anymore!\n";
+		std::cerr << "Ouch! ERROR! Shouldn't have any vertex normals anymore!\n";
 	 	return 1;
+	} else if (clothmesh.has_vertex_normals()){
+		std::cerr << "Cloth: Ouch! ERROR! Shouldn't have any vertex normals anymore!\n";
+		return 1;
 	}
+
+
 	glutInit(&argc,argv);
 	glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH ); 
 	glutInitWindowSize( 1280, 720 ); 

@@ -1,0 +1,46 @@
+PERFIT DRAPE PROCESS DOCUMENTATION
+
+1. MEASUREMENT CHECK
+1.1 Goal
+	The goal of measurement is to give a quick check whether the body model fits the chosen cloth in the aspect of size.
+
+1.2 Input
+	The body model(obj file) with the person's actual height in physics world.
+	The cloth model(obj file) [need to extend by cloth team]
+
+	./BodySimulation <body filename> <cloth filename>
+
+1.3 Concepts & Process Description
+	The basic concept is based on 
+		Hyunsook Han, Yunja Nam, "Automatic body landmark identification for various body figures", Nov 2011,International Journal of Industrial Ergonomics
+			https://www.researchgate.net/publication/251529928_Automatic_body_landmark_identification_for_various_body_figures
+	
+	(1) By iterating through all the nodes in the body, we can get the height of this model. Furthur more, get its ratio toward model's true height.
+	(2) We slice the model in two directions, y direction which is the upward direction and x direction which is the left-to-right direction based the screen. 
+		In both directions, we slice the model into 100 pieces.
+	(3) Then we get the body direction in case of the model is not facing toward the users (z positive direction). The detail process is
+		[1] get the piece in y direction where ankle is.
+		[2] get the mean point in that piece, and assign and rotate a line[1] cross that point which full seperate both of the left part and right part.
+			we make the assumption that if any points in that piece has the distance to the line larger than 5, we assume that the line is found.
+		[3] find the mean points of both of left ankle and right ankle, draw a line[2] through these two point which is the direction of x axis.
+		[4] find the furthurest two points in z direction in the lowest piece of the model. Calculate the distances of these two point to the line[2].
+			The vertical line of the point with longer distance to line[2] is the direction of z directions.
+	(4) Rotate the model into the correct direction
+	(5) Find Crotch point
+			Based on the paper, we define the range of the crotch point is with 45-55 sections in X direction. And find the highest point among each lowest
+			points in these sections.
+	(6) Find Armpits point
+			Based on the paper, we define the range of the armpits are within 65-70 sections in Y direction and 20-40 sections for left armpit and 60-80 sections for right armpit.
+			After having the intersections of two direction sections, find the highest point among each lowest poiint in intersections.
+	(7) Find Waist
+			Based on the paper, we define the range of the waist is within 45-60 sections in Y directions and 20-80 sections in X directions.
+			We consider the waist as a ecllipse and find the furthurest left-to-right points and front-to-back points as a and b for the ecllipse.
+			Using PI * (3ab-sqrt((3a+b)*(a+3b))) as the circumference.
+	(8) Find Shoulder point
+			Based on the paper, we define the range of the shoulder points are within 79-82 sections in Y direction. Find the furthurest two points in X direction
+	(9) Find Hip point
+			Based on the paper, we define the range of the hips are within 40-48 sections in Y directions. Find the furthurest points in Z directions.
+	(10)Find Chest
+			Based on the paper, we define the range of the chestare within 65-70 sections in Y directions. Calculate the chest like waist.
+
+	
