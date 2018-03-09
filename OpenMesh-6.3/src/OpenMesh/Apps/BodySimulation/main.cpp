@@ -14,15 +14,16 @@
 #endif
 
 #include "Body.h"
-
+#include "Cloth.h"
 // ----------------------------------------------------------------------------
-typedef OpenMesh::PolyMesh_ArrayKernelT<>  MyMesh;
+//typedef OpenMesh::PolyMesh_ArrayKernelT<>  MyMesh;
 // ----------------------------------------------------------------------------
 // Build a simple cube and write it to std::cout
 	
 MyMesh mesh;
 MyMesh clothmesh;
 Body* body;
+Cloth* cloth;
 // mouse control state
 typedef enum { ROTATE, TRANSLATE, SCALE } CONTROL_STATE;
 CONTROL_STATE controlState = ROTATE;
@@ -78,6 +79,11 @@ void translate(float& x, float& y, float& z){
 	y += landTranslate[1];
 	z += landTranslate[2];
 }
+
+void position(float& x, float& y, float& z){
+	MyMesh::Point rightshoulder = body->getLandmarks()[4];
+	x = rightshoulder[0] - x + 0.05, y = rightshoulder[1] - y + 0.05, z = rightshoulder[2] - z + 0.05;
+}
 void display()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -88,17 +94,32 @@ void display()
     // Print all the faces
     glBegin(GL_TRIANGLES);
 
-    glColor3f(0.0, 1.0, 0.0);
+    glColor3f(1.0, 1.0, 0.0);
+	static Vector3 gravity(0, -9.8, 0);
+    cloth->addForceToAll(gravity);
+    cloth->timeStep(0.01);
+    std::vector<Face> faces = cloth->getFaces();
+    for (unsigned int i = 0; i < faces.size(); ++i)
+    {
+    	for(unsigned int j = 0; j < 3; ++j){
+    		float x = faces[i].points[j]->getPos().m_x, y = faces[i].points[j]->getPos().m_y, z = faces[i].points[j]->getPos().m_z;
+    		translate(x, y, z);
+    		rotate(x, y, z);
+    		glVertex3f(x, y, z);
+    	}
+    }
+    /*
 	for(MyMesh::FaceIter f_it = clothmesh.faces_begin(); f_it != clothmesh.faces_end(); ++f_it) {
 		
 		for (MyMesh::FaceVertexIter fv_it=clothmesh.fv_iter(*f_it); fv_it.is_valid(); ++fv_it)
   		{
-	    	float x = clothmesh.point(*fv_it)[0]; float y = clothmesh.point(*fv_it)[1]; float z = clothmesh.point(*fv_it)[2];
+	    	float x = clothmesh.point(*fv_it)[0]+disx; float y = clothmesh.point(*fv_it)[1]+disy; float z = clothmesh.point(*fv_it)[2]+disz;
 	    	translate(x, y , z);
 	    	rotate(x, y, z);
 			glVertex3f(x, y, z);    	
 		}
-    }
+    }*/
+    glColor3f(0.0, 1.0, 0.0);
     mesh = body->getBody();
 	for(MyMesh::FaceIter f_it = mesh.faces_begin(); f_it != mesh.faces_end(); ++f_it) {
 		
@@ -126,6 +147,13 @@ void display()
         	glutSolidSphere(0.04,50,50);
     	glPopMatrix();
 	}
+	float x = 0.558488, y = 4.922700, z = -0.124880;
+	translate(x,y,z);
+	rotate(x,y,z);
+	glPushMatrix();
+        glTranslated(x,y,z);
+       	glutSolidSphere(0.04,50,50);
+    glPopMatrix();
 	/*for(unsigned i = 0; i < body->getXSegment(20).size(); i++){
 	    float x = body->getXSegment(20)[i][0], y = body->getXSegment(20)[i][1], z = body->getXSegment(20)[i][2];
 	    rotate(x, y, z);
@@ -353,6 +381,15 @@ int main(int argc, char* argv[])
 	// Body
 	body = new Body(mesh, 183);
 	// Cloth
+	cloth = new Cloth(clothmesh);
+    float disx = 0.558488, disy = 4.922700, disz = -0.124880;
+	position(disx, disy, disz);
+	for (MyMesh::VertexIter v_it=clothmesh.vertices_begin(); v_it!=clothmesh.vertices_end(); ++v_it)
+	{
+		clothmesh.point(*v_it)[0]+=disx;
+		clothmesh.point(*v_it)[1]+=disy;
+		clothmesh.point(*v_it)[2]+=disz;
+	}
 
 	// don't need the normals anymore? Remove them!
 	mesh.release_vertex_normals();

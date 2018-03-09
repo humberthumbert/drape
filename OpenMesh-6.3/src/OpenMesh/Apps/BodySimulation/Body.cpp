@@ -17,6 +17,7 @@ Body::Body(MyMesh mesh, float height){
 	sliceModel();
 	bodyDirection();
 	bodyRotation();
+	kdTree.init(bodyMesh);
 	calLandmarks();
 	std::ofstream ofile("benchmark.txt");
 	ofile << croctchPT << " (croctch)" << std::endl;
@@ -437,4 +438,47 @@ void Body::calChest(){
 	}
 	landmarks.push_back(leftChestPT);
 	landmarks.push_back(rightChestPT);*/
+}
+
+
+bool Body::isCollided(const Vector3& vertex)
+{
+    bool result = false;
+    Vector3 localClosestPoint = Vec::Zero;
+    double localDistance = 0.0;
+
+    // retrive the closest point in body mesh from the given vertex
+    kdTree.getClosestPoint(vertex, localClosestPoint, localDistance);
+
+    // displacement vector
+    OpenMesh::Vec3f uv;
+
+    uv[0] = localClosestPoint[0] - vertex[0];
+    uv[1] = localClosestPoint[1] - vertex[1];
+    uv[2] = localClosestPoint[2] - vertex[2];
+
+    MyMesh::VertexIter vIt,vBegin,vEnd;
+    vBegin = bodyMesh.vertices_begin();
+    vEnd = bodyMesh.vertices_end();
+    for (vIt = vBegin; vIt != vEnd; ++vIt)
+    {
+        if( bodyMesh.point(*vIt)[0] == localClosestPoint[0] &&
+           	bodyMesh.point(*vIt)[1] == localClosestPoint[1] &&
+            bodyMesh.point(*vIt)[2] == localClosestPoint[2] )
+            {
+                break;
+            }
+    }
+
+    // normal for the closest point
+    OpenMesh::Vec3f normal = bodyMesh.normal(*vIt);
+
+    float dotResult = OpenMesh::dot(normal, uv);
+
+    if(dotResult > 0.0f)
+    {
+        result = true;
+    }
+
+    return result;
 }

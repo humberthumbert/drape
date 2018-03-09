@@ -12,13 +12,17 @@
 #include <stdio.h>
 #include <iostream>
 
+#include "GlobalTypes.h"
+#include "KDTree.h"
 #include "Vector.h"
-typedef OpenMesh::PolyMesh_ArrayKernelT<>  MyMesh;
+//typedef OpenMesh::PolyMesh_ArrayKernelT<>  MyMesh;
 typedef enum { CROCTCH, L_ARMPIT, R_ARMPIT, F_NECKPT, S_NECKPT, B_NECKPT, SHOULDER_PT } BODY_LANDMARK;
 
 class Body{
 private:
 	MyMesh bodyMesh;
+	KDTree kdTree;
+
 	// id
 	long n_id;
 	// actual height
@@ -70,6 +74,8 @@ public:
 	Body();
 	Body(MyMesh mesh, float height);
 	Body(char *filename, float height);
+
+	bool isCollided(const Vector3& vertex);
 	// setter and getter
 	MyMesh getBody(){ return bodyMesh; }
 	//void setBody(MyMesh bodyMesh);
