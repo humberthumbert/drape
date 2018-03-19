@@ -1,8 +1,9 @@
 #include "Cloth.h"
 #include <iostream>
 
-Cloth::Cloth(MyMesh mesh)
+Cloth::Cloth(QuadMesh mesh)
 {    
+
      // creating particles
     for (MyMesh::VertexIter v_it=mesh.vertices_begin(); v_it!=mesh.vertices_end(); ++v_it)
     {
@@ -12,7 +13,7 @@ Cloth::Cloth(MyMesh mesh)
     }
 
     // creating face and structural and shear spring
-    unordered_set<std::string> springSet;
+    std::set<std::string> springSet;
     for(MyMesh::FaceIter f_it = mesh.faces_begin(); f_it != mesh.faces_end(); ++f_it) {
         std::vector<Particle*> vertices;
         std::vector<std::string> verticesIdx;
@@ -20,6 +21,7 @@ Cloth::Cloth(MyMesh mesh)
         {
             vertices.push_back(m_particles[fv_it->idx()]);
             verticesIdx.push_back(fv_it->idx()+"");
+
         }
         Particle *topLeft = vertices[0];
         Particle *topRight = vertices[1];
@@ -27,13 +29,18 @@ Cloth::Cloth(MyMesh mesh)
         Particle *botLeft = vertices[3];
         // structural spring | use verticesIdx to eliminate duplicated spring
         AddSpring(springSet, verticesIdx[0], verticesIdx[1], topLeft, topRight, UNI_KST);
+
         AddSpring(springSet, verticesIdx[0], verticesIdx[3], topLeft, botLeft, UNI_KST);
+
         AddSpring(springSet, verticesIdx[2], verticesIdx[1], botRight, topRight, UNI_KST);
+
         AddSpring(springSet, verticesIdx[2], verticesIdx[3], botRight, botLeft, UNI_KST);
         // shear spring
+
         AddSpring(topLeft, botRight, UNI_KSH);
         AddSpring(topRight, botLeft, UNI_KSH);
         // bending spring
+
 
         // two cases
         if (botLeft->isValid() && topLeft->isValid() && botRight->isValid())
@@ -61,9 +68,11 @@ Cloth::Cloth(MyMesh mesh)
         for (MyMesh::VertexVertexIter vv_it=mesh.vv_iter(*v_it); vv_it.is_valid(); ++vv_it) {
             // for each vertex iterate the secondary neighbor, since one vertex's four cross secondary neighbor has been
             // add as shear spring, only secondary neighbors in the same column or row will be add as bending spring.
+
             for (MyMesh::VertexVertexIter v3_it=mesh.vv_iter(*vv_it); v3_it.is_valid(); ++v3_it) {
-                AddSpring(springSet, v_it->idx(), v3_it->idx(), m_particles[v_it->idx()], m_particles[v3_it->idx()], UNI_KB);
+                AddSpring(springSet, v_it->idx() + "", v3_it->idx() + ""                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        , m_particles[v_it->idx()], m_particles[v3_it->idx()], UNI_KB);
             }
+
         }
     }
 }
@@ -91,10 +100,13 @@ void Cloth::timeStep(float deltaTime)
         itrSpr->ApplyForce();
     }
 
-    for (unsigned int i = 0; i < m_particles.size(); ++i)
+    std::vector<Particle*>::iterator itrPar;
+    for (itrPar = m_particles.begin(); itrPar != m_particles.end(); ++itrPar)
     {
-        std::vector<Particle*>::iterator itrPar;
+
+        
         (*itrPar)->timeStep(deltaTime);
+
     }
 }
 
@@ -187,12 +199,14 @@ void Cloth::getNormalsForAll()
     // }
 }
 
-void Cloth::AddSpring(std::unordered_set<std::string> &springSet,std::string p1str, std::string p2str, Particle *p1, Particle *p2, float d) { 
+void Cloth::AddSpring(std::set<std::string> &springSet,std::string p1str, std::string p2str, Particle *p1, Particle *p2, float d) { 
+
     std::string p1p2 = p1str+"|"+p2str, p2p1 = p2str+"|"+p1str;
     if(springSet.find(p1p2) == springSet.end() && springSet.find(p2p1) == springSet.end()){
         springSet.insert(p2p1);
         m_springs.push_back(Spring(p1, p2, d));  
     }
+
 }
 
 void Cloth::AddSpring(Particle *p1, Particle *p2, float d) { 

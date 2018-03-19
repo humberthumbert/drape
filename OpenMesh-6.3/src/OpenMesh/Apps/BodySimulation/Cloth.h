@@ -16,7 +16,7 @@
 #include <functional>
 #include <string>
 #include <stdio.h>
-#include <unordered_set>
+#include <set>
 
 //#include <OpenMesh/Core/Geometry/VectorT.hh>
 
@@ -58,11 +58,11 @@ private:
   std::vector<Spring> m_springs;
 	std::vector<Face> m_faces;
 	void AddSpring(Particle *p1, Particle *p2, float d);
-	void AddSpring(std::unordered_set<std::string> &springSet, std::string p1str, std::string p2str, Particle* p1, Particle* p2, float d);
+	void AddSpring(std::set<std::string> &springSet, std::string p1str, std::string p2str, Particle* p1, Particle* p2, float d);
 	void AddFace(Particle *p1, Particle *p2, Particle *p3) { m_faces.push_back(Face(p1, p2, p3)); }
 
 public:
-  explicit Cloth(MyMesh mesh);
+  explicit Cloth(QuadMesh mesh);
   explicit Cloth() {}
 	~Cloth();
 	void timeStep(float deltaTime);

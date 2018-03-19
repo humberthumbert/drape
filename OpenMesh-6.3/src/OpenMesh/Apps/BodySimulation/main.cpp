@@ -21,7 +21,7 @@
 // Build a simple cube and write it to std::cout
 	
 MyMesh mesh;
-MyMesh clothmesh;
+QuadMesh clothmesh;
 Body* body;
 Cloth* cloth;
 // mouse control state
@@ -97,7 +97,7 @@ void display()
     glColor3f(1.0, 1.0, 0.0);
 	static Vector3 gravity(0, -9.8, 0);
     cloth->addForceToAll(gravity);
-    cloth->timeStep(0.01);
+    cloth->timeStep(0.001);
     std::vector<Face> faces = cloth->getFaces();
     for (unsigned int i = 0; i < faces.size(); ++i)
     {

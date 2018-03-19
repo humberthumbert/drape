@@ -3,7 +3,9 @@
 
 //------- OpenMesh
 #include <OpenMesh/Core/Mesh/TriMesh_ArrayKernelT.hh>
+#include <OpenMesh/Core/Mesh/PolyMesh_ArrayKernelT.hh>
 typedef OpenMesh::TriMesh_ArrayKernelT<>  MyMesh;
+typedef OpenMesh::PolyMesh_ArrayKernelT<>  QuadMesh;
 
 // ------------------- Constants
 #define PARTICLE_VELOCITY_DAMPING 0.1f // Damping is for air resistence, we might not want to use it once we have F(air resistence) done.

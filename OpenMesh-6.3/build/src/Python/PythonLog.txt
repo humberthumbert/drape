@@ -4,14 +4,10 @@ INCLUDE_DIRECTORIES: /usr/include/python2.7;/usr/include
 LINK_DIRECTORIES: /usr/lib/x86_64-linux-gnu
 LINK_LIBRARIES: /usr/lib/x86_64-linux-gnu/libpython2.7.so;/usr/lib/x86_64-linux-gnu/libboost_python-py27.so
 
-Change Dir: /home/lifan/drape/OpenMesh-6.3/build/src/Python
+Change Dir: /home/student/csci401/drape/OpenMesh-6.3/build/src/Python
 
 Run Build Command:"/usr/bin/make"
-make[1]: Entering directory '/home/lifan/drape/OpenMesh-6.3/build/src/Python'
-make[2]: Entering directory '/home/lifan/drape/OpenMesh-6.3/build/src/Python'
-make[3]: Entering directory '/home/lifan/drape/OpenMesh-6.3/build/src/Python'
 Scanning dependencies of target example
-make[3]: Leaving directory '/home/lifan/drape/OpenMesh-6.3/build/src/Python'
+[ 50%] Building CXX object CMakeFiles/example.dir/Example.cc.o
+[100%] Linking CXX shared library example.so
 [100%] Built target example
-make[2]: Leaving directory '/home/lifan/drape/OpenMesh-6.3/build/src/Python'
-make[1]: Leaving directory '/home/lifan/drape/OpenMesh-6.3/build/src/Python'
