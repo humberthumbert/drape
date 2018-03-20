@@ -96,13 +96,13 @@ void display()
     glBegin(GL_TRIANGLES);
 
     glColor3f(1.0, 1.0, 0.0);
-	static Vector3 gravity(0, -0.1, 0);
+	static Vector3 gravity(0, -9.8, 0);
     cloth->addForceToAll(gravity);
 
-   if (first){
-	    cloth->timeStep(0.001);
+   //if (first){
+	    cloth->timeStep(0.01);
 		first = false;    	
-    }
+    //}
     
     std::vector<Face> faces = cloth->getFaces();
     for (unsigned int i = 0; i < faces.size(); ++i)
@@ -116,6 +116,8 @@ void display()
 
     	}
     }
+
+    
 /*    
 	for(MyMesh::FaceIter f_it = clothmesh.faces_begin(); f_it != clothmesh.faces_end(); ++f_it) {
 		std::cout << "found face" << std::endl;
@@ -385,7 +387,7 @@ int main(int argc, char* argv[])
 	{
 		std::cerr << "Error loading cloth mesh fromt file " << argv[2] << std::endl;
 	}
-	
+
 	// If the file did not provide vertex normals, then calculate them
 	if ( !opt.check( OpenMesh::IO::Options::VertexNormal ) )
 	{

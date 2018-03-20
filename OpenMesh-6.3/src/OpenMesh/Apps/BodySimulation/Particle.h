@@ -26,7 +26,7 @@ public:
 	Particle(const Vector3 &pos, float mass)
 	:m_movable(true), m_mass(mass), m_pos(pos), m_oldPos(pos), m_acceleration(Vec::Zero), m_norm(Vec::Zero)
 	{
-	    m_active = (pos.m_x != -1.0f) && (pos.m_y != -1.0f);
+	    m_active = true;
 	}
 
 	Particle() {}

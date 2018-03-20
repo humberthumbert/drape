@@ -2,7 +2,7 @@
 #define SPRING_H
 
 #include "Particle.h"
-
+#include <iostream>
 class Spring
 {
 private:
@@ -22,8 +22,20 @@ public:
     void ApplyForce() const
     {
         Vector3 displacement(p1->getPos() - p2->getPos());
-        Vector3 fSpring = displacement.getNorm() * m_ks * (displacement.length() - m_rest);
+        float amountUsed;
+        float actual = displacement.length() - m_rest;
+        float max = 1.1 * m_rest;
+        float min = 0.9 * m_rest;
+        if (actual > max){
+            amountUsed = max;
+        }else if(actual < min){
+            amountUsed = min;
+        }else{
+            amountUsed = actual;
+        }
+        Vector3 fSpring = displacement.getNorm() * m_ks * (amountUsed);
 
+       // std::cout << "displacement length: " << displacement.length() << " m_rest: " << m_rest << " amountUsed " << amountUsed << std::endl;
         p1->addForce(-fSpring);
         p2->addForce(fSpring);
     }
