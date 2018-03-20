@@ -107,14 +107,13 @@ void display()
     std::vector<Face> faces = cloth->getFaces();
     for (unsigned int i = 0; i < faces.size(); ++i)
     {
-    	std::cout << "found face" << std::endl;
     	for(unsigned int j = 0; j < 3; ++j){
 
     		float x = faces[i].points[j]->getPos().m_x, y = faces[i].points[j]->getPos().m_y, z = faces[i].points[j]->getPos().m_z;
     		translate(x, y, z);
     		rotate(x, y, z);
     		glVertex3f(x, y, z);
-    		std::cout << "found face vertex" << std::endl;
+
     	}
     }
 /*    
