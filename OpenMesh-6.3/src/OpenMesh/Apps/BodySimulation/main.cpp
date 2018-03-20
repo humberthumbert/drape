@@ -84,6 +84,7 @@ void position(float& x, float& y, float& z){
 	MyMesh::Point rightshoulder = body->getLandmarks()[4];
 	x = rightshoulder[0] - x + 0.05, y = rightshoulder[1] - y + 0.05, z = rightshoulder[2] - z + 0.05;
 }
+bool first = false;
 void display()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -95,28 +96,46 @@ void display()
     glBegin(GL_TRIANGLES);
 
     glColor3f(1.0, 1.0, 0.0);
-	static Vector3 gravity(0, -9.8, 0);
+	static Vector3 gravity(0, -0.1, 0);
     cloth->addForceToAll(gravity);
-    cloth->timeStep(0.001);
+
+   if (first){
+	    cloth->timeStep(0.001);
+		first = false;    	
+    }
+    
     std::vector<Face> faces = cloth->getFaces();
     for (unsigned int i = 0; i < faces.size(); ++i)
     {
+    	std::cout << "found face" << std::endl;
     	for(unsigned int j = 0; j < 3; ++j){
+
     		float x = faces[i].points[j]->getPos().m_x, y = faces[i].points[j]->getPos().m_y, z = faces[i].points[j]->getPos().m_z;
     		translate(x, y, z);
     		rotate(x, y, z);
     		glVertex3f(x, y, z);
+    		std::cout << "found face vertex" << std::endl;
     	}
     }
-    /*
+/*    
 	for(MyMesh::FaceIter f_it = clothmesh.faces_begin(); f_it != clothmesh.faces_end(); ++f_it) {
-		
+		std::cout << "found face" << std::endl;
+		int count = 0;
 		for (MyMesh::FaceVertexIter fv_it=clothmesh.fv_iter(*f_it); fv_it.is_valid(); ++fv_it)
   		{
-	    	float x = clothmesh.point(*fv_it)[0]+disx; float y = clothmesh.point(*fv_it)[1]+disy; float z = clothmesh.point(*fv_it)[2]+disz;
+  			std::cout << "found face vertex" << std::endl;
+  			if(count == 3){
+
+  				count = 0;
+  			}
+  			else{
+  				float x = clothmesh.point(*fv_it)[0]; float y = clothmesh.point(*fv_it)[1]; float z = clothmesh.point(*fv_it)[2];
 	    	translate(x, y , z);
 	    	rotate(x, y, z);
-			glVertex3f(x, y, z);    	
+			glVertex3f(x, y, z);
+			count++;    
+  			}
+	    		
 		}
     }*/
     glColor3f(0.0, 1.0, 0.0);
@@ -201,6 +220,9 @@ void keyboardFunc(unsigned char key, int x, int y)
         case '\033': 
             exit(0);
             break;
+        case 's':
+        	first = true;
+        	break;
         default:
             break;
     }
@@ -358,10 +380,13 @@ int main(int argc, char* argv[])
 	{
     	std::cerr << "Error loading mesh from file " << argv[1] << std::endl;
 		return 1;
-	} else if ( ! OpenMesh::IO::read_mesh(clothmesh, argv[2], clothopt))
+	} 
+
+	else if ( ! OpenMesh::IO::read_mesh(clothmesh, argv[2], clothopt))
 	{
 		std::cerr << "Error loading cloth mesh fromt file " << argv[2] << std::endl;
 	}
+	
 	// If the file did not provide vertex normals, then calculate them
 	if ( !opt.check( OpenMesh::IO::Options::VertexNormal ) )
 	{
@@ -378,18 +403,34 @@ int main(int argc, char* argv[])
     	clothmesh.release_face_normals();
 	}
 	
+/*
+  QuadMesh::VertexHandle vhandle[4];
+  vhandle[0] = clothmesh.add_vertex(MyMesh::Point(-1, 3,  -1));
+  vhandle[1] = clothmesh.add_vertex(MyMesh::Point( 1, 3,  -1));
+  vhandle[2] = clothmesh.add_vertex(MyMesh::Point( 1, 3,  1));
+  vhandle[3] = clothmesh.add_vertex(MyMesh::Point(-1, 3,  1));
+
+  // generate (quadrilateral) faces
+  std::vector<MyMesh::VertexHandle>  face_vhandles;
+  face_vhandles.clear();
+  face_vhandles.push_back(vhandle[0]);
+  face_vhandles.push_back(vhandle[1]);
+  face_vhandles.push_back(vhandle[2]);
+  face_vhandles.push_back(vhandle[3]);
+  clothmesh.add_face(face_vhandles);
+*/
 	// Body
 	body = new Body(mesh, 183);
 	// Cloth
 	cloth = new Cloth(clothmesh);
-    float disx = 0.558488, disy = 4.922700, disz = -0.124880;
+    /*float disx = 0.558488, disy = 4.922700, disz = -0.124880;
 	position(disx, disy, disz);
 	for (MyMesh::VertexIter v_it=clothmesh.vertices_begin(); v_it!=clothmesh.vertices_end(); ++v_it)
 	{
 		clothmesh.point(*v_it)[0]+=disx;
 		clothmesh.point(*v_it)[1]+=disy;
 		clothmesh.point(*v_it)[2]+=disz;
-	}
+	}*/
 
 	// don't need the normals anymore? Remove them!
 	mesh.release_vertex_normals();

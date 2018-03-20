@@ -15,6 +15,7 @@ Cloth::Cloth(QuadMesh mesh)
     // creating face and structural and shear spring
     std::set<std::string> springSet;
     for(MyMesh::FaceIter f_it = mesh.faces_begin(); f_it != mesh.faces_end(); ++f_it) {
+
         std::vector<Particle*> vertices;
         std::vector<std::string> verticesIdx;
         for (MyMesh::FaceVertexIter fv_it=mesh.fv_iter(*f_it); fv_it.is_valid(); ++fv_it)
@@ -41,6 +42,7 @@ Cloth::Cloth(QuadMesh mesh)
         AddSpring(topRight, botLeft, UNI_KSH);
         // bending spring
 
+        std::cout << "vertices size: " << vertices.size() << std::endl;
 
         // two cases
         if (botLeft->isValid() && topLeft->isValid() && botRight->isValid())
@@ -75,6 +77,8 @@ Cloth::Cloth(QuadMesh mesh)
 
         }
     }
+
+    std::cout << "size of m Faces" <<  m_faces.size() << std::endl;
 }
 
 Cloth::~Cloth()
