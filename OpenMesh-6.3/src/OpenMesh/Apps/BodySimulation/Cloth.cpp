@@ -92,6 +92,7 @@ Cloth::~Cloth()
 
 void Cloth::timeStep(float deltaTime)
 {
+    std::cout << "in ts" << std::endl;
     // Apply forces
     std::vector<Spring>::iterator itrSpr;
     for(itrSpr = m_springs.begin(); itrSpr != m_springs.end(); ++itrSpr )
@@ -108,10 +109,7 @@ void Cloth::timeStep(float deltaTime)
     std::vector<Particle*>::iterator itrPar;
     for (itrPar = m_particles.begin(); itrPar != m_particles.end(); ++itrPar)
     {
-
-        
         (*itrPar)->timeStep(deltaTime);
-
     }
   //  printAllSprings();
 }

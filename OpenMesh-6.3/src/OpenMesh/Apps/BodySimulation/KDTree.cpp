@@ -72,10 +72,10 @@ KDTree::getClosestPoint(const Vector3& _queryVertex, Vector3& resultPoint, doubl
 
     annDeallocPt(queryPt);
 
-#ifdef DEBUG
-    std::cout << "distance is " << dists[0] << " and the point is at" << (*dataPoints_)[nnIdx[0]][0] 
-			  << "," << (*dataPoints_)[nnIdx[0]][1] << "," << (*dataPoints_)[nnIdx[0]][2] << std::endl;
-#endif
+// #ifdef DEBUG
+//     std::cout << "distance is " << dists[0] << " and the point is at" << (*dataPoints_)[nnIdx[0]][0] 
+// 			  << "," << (*dataPoints_)[nnIdx[0]][1] << "," << (*dataPoints_)[nnIdx[0]][2] << std::endl;
+// #endif
  
     resultPoint[0] = (*dataPoints_)[nnIdx[0]][0];
 	resultPoint[1] = (*dataPoints_)[nnIdx[0]][1];

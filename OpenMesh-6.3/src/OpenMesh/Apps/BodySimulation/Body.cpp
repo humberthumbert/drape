@@ -206,6 +206,8 @@ void Body::calLandmarks(){
 	calShoulderPT();
 	calHip();
 	calChest();
+
+	std::cout << "landmark size" << landmarks.size() << std::endl;
 }
 
 MyMesh::Point lowestInSection(std::vector<MyMesh::Point> section){

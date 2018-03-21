@@ -100,8 +100,9 @@ void display()
     cloth->addForceToAll(gravity);
 
    //if (first){
-	    cloth->timeStep(0.01);
-		first = false;    	
+	   // cloth->timeStep(0.1);
+		first = false;    
+		//cloth->collisionCheck(*body);	
     //}
     
     std::vector<Face> faces = cloth->getFaces();
@@ -420,18 +421,22 @@ int main(int argc, char* argv[])
   face_vhandles.push_back(vhandle[3]);
   clothmesh.add_face(face_vhandles);
 */
-	// Body
 	body = new Body(mesh, 183);
-	// Cloth
-	cloth = new Cloth(clothmesh);
-    /*float disx = 0.558488, disy = 4.922700, disz = -0.124880;
-	position(disx, disy, disz);
+
+    float disx = 0.12, disy = 0.0, disz = 0.14;
+//	position(disx, disy, disz);
+
 	for (MyMesh::VertexIter v_it=clothmesh.vertices_begin(); v_it!=clothmesh.vertices_end(); ++v_it)
 	{
 		clothmesh.point(*v_it)[0]+=disx;
 		clothmesh.point(*v_it)[1]+=disy;
 		clothmesh.point(*v_it)[2]+=disz;
-	}*/
+	}
+
+	// Body
+	
+	// Cloth
+	cloth = new Cloth(clothmesh);
 
 	// don't need the normals anymore? Remove them!
 	mesh.release_vertex_normals();
