@@ -5,8 +5,10 @@
 
 // -------------------- OpenGL
 #if defined(WIN32) || defined(linux)
-  #include <GL/gl.h>
-  #include <GL/glut.h>
+
+#include <GL/glew.h>
+#include <GL/gl.h>
+#include <glut.h>
 #elif defined(__APPLE__)
   #include <OpenGL/gl.h>
   #include <OpenGL/glu.h>
@@ -15,6 +17,8 @@
 
 #include "Body.h"
 #include "Cloth.h"
+#include "basicPipelineProgram.h"
+#include "openGLMatrix.h"
 // ----------------------------------------------------------------------------
 //typedef OpenMesh::PolyMesh_ArrayKernelT<>  MyMesh;
 // ----------------------------------------------------------------------------
@@ -39,22 +43,54 @@ float landRotate[3] = { 0.0f, 0.0f, 0.0f };
 float landTranslate[3] = { 0.0f, 0.0f, 0.0f };
 float landScale[3] = { 1.0f, 1.0f, 1.0f };
 
+
+GLfloat lightpos[] = { 0.0, 2.0, 0.0, 0.0 };
+GLfloat mat_specular[] = { 0.81, 0.73, 0.91,1.0 };
+GLfloat light_ambient[] = { 0.0, 0.0, 0.0, 1.0 };
+GLfloat light_diffuse[] = { 1.0, 1.0, 1.0, 1.0 };
+GLfloat light_specular[] = { 1.0, 1.0, 1.0, 1.0 };
+GLfloat mat_amb_diff[] = { 0.41, 0.33, 0.51, 1.0 };
+
+GLfloat mat_amb_diff_cloth[] = { 0.91, 0.63, 0.51, 1.0 };
+
+GLfloat lightpos2[] = { 0.0, 0.5, 2.0, 0.0 };
+GLfloat lightpos3[] = { 0.0, 0.5, -2.0, 0.0 };
+
+GLfloat mat_shininess[] = { 50 };
 void init()
 {
-    glShadeModel(GL_SMOOTH);
-    //glClearColor(.2f, .2f, .4f, .5f);
-    glEnable(GL_DEPTH_TEST);
-    /*glEnable(GL_LIGHTING);
-    glEnable(GL_LIGHT0);
-    GLfloat lightpos[] = {2.0, 2.0, 2.0, 0.0};
-    glLightfv(GL_LIGHT0, GL_POSITION, lightpos);
-    GLfloat white[] = {0.8f, 0.8f, 0.8f, 1.0f};
-    GLfloat cyan[] = {0.f, .8f, .8f, 1.f};
-    glMaterialfv(GL_FRONT, GL_DIFFUSE, cyan);
-    glMaterialfv(GL_FRONT, GL_SPECULAR, white);
-    GLfloat shininess[] = {50};
-    glMaterialfv(GL_FRONT, GL_SHININESS, shininess);
-*/
+    glShadeModel(GL_FLAT);
+    
+	glClearColor(0.0f,0.0f,0.0f,0.0f);
+   
+
+    
+
+    glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE,
+		mat_amb_diff);
+
+	glLightfv(GL_LIGHT0, GL_POSITION, lightpos);
+	glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient);
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
+	glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);
+
+	glLightfv(GL_LIGHT1, GL_POSITION, lightpos2);
+	glLightfv(GL_LIGHT1, GL_AMBIENT, light_ambient);
+	glLightfv(GL_LIGHT1, GL_DIFFUSE, light_diffuse);
+	glLightfv(GL_LIGHT1, GL_SPECULAR, light_specular);
+
+	glLightfv(GL_LIGHT2, GL_POSITION, lightpos3);
+	glLightfv(GL_LIGHT2, GL_AMBIENT, light_ambient);
+	glLightfv(GL_LIGHT2, GL_DIFFUSE, light_diffuse);
+	glLightfv(GL_LIGHT2, GL_SPECULAR, light_specular);
+
+	glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHT0);
+	glEnable(GL_LIGHT1);
+	glEnable(GL_LIGHT2);
+	glEnable(GL_DEPTH_TEST);
 
 }
 void rotate(float& x, float& y, float& z){
@@ -85,6 +121,22 @@ void position(float& x, float& y, float& z){
 	x = rightshoulder[0] - x + 0.05, y = rightshoulder[1] - y + 0.05, z = rightshoulder[2] - z + 0.05;
 }
 bool first = false;
+struct Point
+{
+	double x;
+	double y;
+	double z;
+};
+Point cross(Point a, Point b) {
+	Point retVal;
+
+	retVal.x = a.y * b.z - a.z * b.y;
+	retVal.y = a.z * b.x - a.x * b.z;
+	retVal.z = a.x * b.y - a.y * b.x;
+
+	return retVal;
+}
+
 void display()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -100,25 +152,53 @@ void display()
     cloth->addForceToAll(gravity);
 
    //if (first){
-	   // cloth->timeStep(0.1);
+	    cloth->timeStep(0.1);
 		first = false;    
-		//cloth->collisionCheck(*body);	
+		cloth->collisionCheck(*body);	
     //}
     
+		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE,
+			mat_amb_diff_cloth);
     std::vector<Face> faces = cloth->getFaces();
     for (unsigned int i = 0; i < faces.size(); ++i)
     {
-    	for(unsigned int j = 0; j < 3; ++j){
+		float x1 = faces[i].points[0]->getPos().m_x, y1 = faces[i].points[0]->getPos().m_y, z1 = faces[i].points[0]->getPos().m_z;
+		float x2 = faces[i].points[1]->getPos().m_x, y2 = faces[i].points[1]->getPos().m_y, z2 = faces[i].points[1]->getPos().m_z;
+		float x3 = faces[i].points[2]->getPos().m_x, y3 = faces[i].points[2]->getPos().m_y, z3 = faces[i].points[2]->getPos().m_z;
 
-    		float x = faces[i].points[j]->getPos().m_x, y = faces[i].points[j]->getPos().m_y, z = faces[i].points[j]->getPos().m_z;
-    		translate(x, y, z);
-    		rotate(x, y, z);
-    		glVertex3f(x, y, z);
+		Point v1, v2;
+		v1.x = x1 - x2;
+		v1.y = y1 - y2;
+		v1.z = z1 - z2;
 
-    	}
+		v2.x = x1 - x3;
+		v2.y = y1 - y3;
+		v2.z = z1 - z3;
+
+		Point normal = cross(v1, v2);
+
+		translate(x1, y1, z1);
+		rotate(x1, y1, z1);
+		glVertex3f(x1, y1, z1);
+		//glNormal3f((float)normal.x, (float)normal.y, (float)normal.z);
+
+		translate(x2, y2, z2);
+		rotate(x2, y2, z2);
+		glVertex3f(x2, y2, z2);
+		//glNormal3f((float)normal.x, (float)normal.y, (float)normal.z);
+
+		translate(x3, y3, z3);
+		rotate(x3, y3, z3);
+		glVertex3f(x3, y3, z3);
+		//glNormal3f((float)normal.x, (float)normal.y, (float)normal.z);
+
+	//	std::cout << normal.x << " " << normal.y << " " << normal.z << std::endl;
+		
+
     }
 
-    
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE,
+		mat_amb_diff);
 /*    
 	for(MyMesh::FaceIter f_it = clothmesh.faces_begin(); f_it != clothmesh.faces_end(); ++f_it) {
 		std::cout << "found face" << std::endl;
@@ -148,9 +228,15 @@ void display()
   		{
 	    	// do something with e.g. mesh.point(*fv_it)
 	    	float x = mesh.point(*fv_it)[0]; float y = mesh.point(*fv_it)[1]; float z = mesh.point(*fv_it)[2];
+			
 	    	translate(x, y , z);
 	    	rotate(x, y, z);
 			glVertex3f(x, y, z);    	
+			GLfloat normalX = mesh.normal(*fv_it)[0];
+			GLfloat normalY = mesh.normal(*fv_it)[1];
+			GLfloat normalZ = mesh.normal(*fv_it)[2];
+
+			glNormal3f(normalX,normalY,normalZ);
 		}
     } 
     glEnd();
@@ -363,9 +449,13 @@ void mouseButtonFunc(int button, int state, int x, int y)
 
 int main(int argc, char* argv[])
 {
+
 	if (argc!=3)
 	{
 		std::cerr << "Usage: " << argv[0] << " <input>\n";
+		while (true) {
+
+		}
 		return 1;
 	}
 	// request vertex normals, so the mesh reader can use normal information
@@ -376,6 +466,7 @@ int main(int argc, char* argv[])
 	{
 		std::cerr << "ERROR: Standard vertex property 'Normals' not available!\n";
 		return 1;
+
 	}
 	OpenMesh::IO::Options opt, clothopt;
 	if ( ! OpenMesh::IO::read_mesh(mesh,argv[1], opt))
@@ -453,8 +544,10 @@ int main(int argc, char* argv[])
 
 
 	glutInit(&argc,argv);
-	glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH ); 
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH | GLUT_STENCIL);
 	glutInitWindowSize( 1280, 720 ); 
+
+
 	glutCreateWindow( "Cube Sample" );
 	init();
 	glutDisplayFunc(display);  
