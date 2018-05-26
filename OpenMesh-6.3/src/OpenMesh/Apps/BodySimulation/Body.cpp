@@ -2,6 +2,8 @@
 #include <limits>
 #include <cmath>
 #include <fstream>
+#include<algorithm>
+#include<iterator>
 
 #define MEAN_ANKLE_HEIGHT 10
 #define LEG_DIVISION_CRITIAL_DIST 5
@@ -53,6 +55,9 @@ void Body::getModelHeight(){
 
 // slice the model into 100 section
 void Body::sliceModel(){
+	ySegment = std::vector<std::vector<MyMesh::Point> >(100);
+	xSegment = std::vector<std::vector<MyMesh::Point> >(100);
+	
 	float percentage = 0.0f;
 	for (MyMesh::VertexIter v_it=bodyMesh.vertices_begin(); v_it!=bodyMesh.vertices_end(); ++v_it)
 	{
@@ -441,46 +446,70 @@ void Body::calChest(){
 	landmarks.push_back(leftChestPT);
 	landmarks.push_back(rightChestPT);*/
 }
-
-
-bool Body::isCollided(const Vector3& vertex)
+bool checkWithin(Vector3& position, Vector3* closest){
+    Vector3 v0 = closest[1] - closest[0];
+    Vector3 v1 = closest[2] - closest[0];
+    Vector3 v2 = position - closest[0];
+    float dot00 = v0.dot(v0);
+	float dot01 = v0.dot(v1);
+	float dot02 = v0.dot(v2);
+	float dot11 = v1.dot(v1);
+	float dot12 = v1.dot(v2);
+	float invDenom = 1 / (dot00 * dot11 - dot01 * dot01);
+	float u = (dot11 * dot02 - dot01 * dot12) * invDenom;
+	float v = (dot00 * dot12 - dot01 * dot02) * invDenom;
+	if( u < 0 || v < 0 || (u + v) > 1) { return false; }
+	else return true;
+}
+Vector3 Body::repulsionResponse(Vector3& position, Vector3& velocity)
 {
-    bool result = false;
+	bool result = false;
     Vector3 localClosestPoint = Vec::Zero;
     double localDistance = 0.0;
-
+   	
     // retrive the closest point in body mesh from the given vertex
-    kdTree.getClosestPoint(vertex, localClosestPoint, localDistance);
-
-    // displacement vector
-    OpenMesh::Vec3f uv;
-
-    uv[0] = localClosestPoint[0] - vertex[0];
-    uv[1] = localClosestPoint[1] - vertex[1];
-    uv[2] = localClosestPoint[2] - vertex[2];
-
-    MyMesh::VertexIter vIt,vBegin,vEnd;
-    vBegin = bodyMesh.vertices_begin();
-    vEnd = bodyMesh.vertices_end();
-    for (vIt = vBegin; vIt != vEnd; ++vIt)
+    kdTree.getClosestPoint(position, localClosestPoint, localDistance);
+	//std::cout << "repulsionResponse" << std::endl;
+    if(localDistance > 0.01 || localDistance < 0) return Vec::Zero;
+	MyMesh::VertexIter vIt;
+    for (vIt = bodyMesh.vertices_begin(); vIt != bodyMesh.vertices_end(); ++vIt)
     {
         if( bodyMesh.point(*vIt)[0] == localClosestPoint[0] &&
            	bodyMesh.point(*vIt)[1] == localClosestPoint[1] &&
-            bodyMesh.point(*vIt)[2] == localClosestPoint[2] )
-            {
+            bodyMesh.point(*vIt)[2] == localClosestPoint[2] ) {
                 break;
             }
     }
-
-    // normal for the closest point
-    OpenMesh::Vec3f normal = bodyMesh.normal(*vIt);
-
-    float dotResult = OpenMesh::dot(normal, uv);
-
-    if(dotResult > 0.0f)
-    {
-        result = true;
+    //printf("Clo: x:%f, y:%f, z:%f\n", bodyMesh.point(*vIt)[0], bodyMesh.point(*vIt)[1], bodyMesh.point(*vIt)[2]);
+    MyMesh::VertexFaceIter closestFace; float longest = std::numeric_limits<float>::min(); 
+    Vector3 closest[3];
+    for(MyMesh::VertexFaceIter vf_it = bodyMesh.vf_iter(*vIt); vf_it.is_valid(); ++vf_it){
+    	Vector3 v[3]; int i = 0; 
+    	Vector3 faceNormal = Vector3(bodyMesh.normal(*vf_it)[0], bodyMesh.normal(*vf_it)[1], bodyMesh.normal(*vf_it)[2]);
+    	if(faceNormal.dot(Vector3(0,1,0)) < 0) faceNormal = faceNormal * -1;
+    	for(MyMesh::FaceVertexIter fv_it = bodyMesh.fv_iter(*vf_it); fv_it.is_valid(); ++fv_it){
+    		v[i] = Vector3(bodyMesh.point(*fv_it)[0], bodyMesh.point(*fv_it)[1], bodyMesh.point(*fv_it)[2]);
+    		i++;
+    	}
+    	if(checkWithin(position, v)){
+	    	Vector3 uv = position - v[0];
+	    	float length = std::abs(uv.dot(faceNormal.getNorm()));
+	    	if(length > longest) {
+	    		longest = length;
+	    		closestFace = vf_it;
+	    		closest[0] = v[0]; closest[1] = v[1]; closest[2] = v[2];
+	    	}
+    	}
     }
-
-    return result;
+    if (longest == std::numeric_limits<float>::min()) { return Vec::Zero; }
+    // if the distance is large, not collision
+    if(longest > 0.01 || longest < 0) { return Vec::Zero; }
+    // benycentric coordinate to check if it is within the triangle
+	// inside, collide => give response
+    Vector3 faceNormal = Vector3(bodyMesh.normal(*closestFace)[0], bodyMesh.normal(*closestFace)[1], bodyMesh.normal(*closestFace)[2]);
+    if(faceNormal.dot(Vector3(0,1,0)) < 0) faceNormal = faceNormal * -1;
+    Vector3 supportVelocity = faceNormal.getNorm()*std::abs(faceNormal.dot(velocity));
+    //Vector3 parallelVelocity = velocity - supportVelocity;
+    //std::cout << "FaceNormal " << faceNormal << std::endl;
+    return supportVelocity;
 }

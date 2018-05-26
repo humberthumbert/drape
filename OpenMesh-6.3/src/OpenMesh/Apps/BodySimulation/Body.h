@@ -35,8 +35,8 @@ private:
 	// iterator through all the vertice and find the highest and lowest point
 	void getModelHeight();
 	// divide the model into 100 sections based on z coord, xy plane
-	std::vector<std::vector<MyMesh::Point> > ySegment = std::vector<std::vector<MyMesh::Point> >(100);
-	std::vector<std::vector<MyMesh::Point> > xSegment = std::vector<std::vector<MyMesh::Point> >(100);
+	std::vector<std::vector<MyMesh::Point> > ySegment;// = std::vector<std::vector<MyMesh::Point> >(100);
+	std::vector<std::vector<MyMesh::Point> > xSegment;// = std::vector<std::vector<MyMesh::Point> >(100);
 	
 	// slice the model into 100 section
 	void sliceModel();
@@ -75,7 +75,7 @@ public:
 	Body(MyMesh mesh, float height);
 	Body(char *filename, float height);
 
-	bool isCollided(const Vector3& vertex);
+	Vector3 repulsionResponse(Vector3& position, Vector3& force);
 	// setter and getter
 	MyMesh getBody(){ return bodyMesh; }
 	//void setBody(MyMesh bodyMesh);

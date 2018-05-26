@@ -8,7 +8,7 @@
 
 #include <GL/glew.h>
 #include <GL/gl.h>
-#include <glut.h>
+#include <GL/glut.h>
 #elif defined(__APPLE__)
   #include <OpenGL/gl.h>
   #include <OpenGL/glu.h>
@@ -17,8 +17,8 @@
 
 #include "Body.h"
 #include "Cloth.h"
-#include "basicPipelineProgram.h"
-#include "openGLMatrix.h"
+//#include "basicPipelineProgram.h"
+//#include "openGLMatrix.h"
 // ----------------------------------------------------------------------------
 //typedef OpenMesh::PolyMesh_ArrayKernelT<>  MyMesh;
 // ----------------------------------------------------------------------------
@@ -42,7 +42,7 @@ int mousePos[2];
 float landRotate[3] = { 0.0f, 0.0f, 0.0f };
 float landTranslate[3] = { 0.0f, 0.0f, 0.0f };
 float landScale[3] = { 1.0f, 1.0f, 1.0f };
-
+/*
 
 GLfloat lightpos[] = { 0.0, 2.0, 0.0, 0.0 };
 GLfloat mat_specular[] = { 0.81, 0.73, 0.91,1.0 };
@@ -57,14 +57,12 @@ GLfloat lightpos2[] = { 0.0, 0.5, 2.0, 0.0 };
 GLfloat lightpos3[] = { 0.0, 0.5, -2.0, 0.0 };
 
 GLfloat mat_shininess[] = { 50 };
+*/
 void init()
 {
-    glShadeModel(GL_FLAT);
+/*    glShadeModel(GL_FLAT);
     
 	glClearColor(0.0f,0.0f,0.0f,0.0f);
-   
-
-    
 
     glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
 	glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
@@ -91,7 +89,9 @@ void init()
 	glEnable(GL_LIGHT1);
 	glEnable(GL_LIGHT2);
 	glEnable(GL_DEPTH_TEST);
-
+*/
+	glShadeModel(GL_SMOOTH);
+	glEnable(GL_DEPTH_TEST);
 }
 void rotate(float& x, float& y, float& z){
 	// rotate x
@@ -120,7 +120,7 @@ void position(float& x, float& y, float& z){
 	MyMesh::Point rightshoulder = body->getLandmarks()[4];
 	x = rightshoulder[0] - x + 0.05, y = rightshoulder[1] - y + 0.05, z = rightshoulder[2] - z + 0.05;
 }
-bool first = false;
+//bool first = false;
 struct Point
 {
 	double x;
@@ -146,25 +146,16 @@ void display()
     glClear(GL_COLOR_BUFFER_BIT| GL_DEPTH_BUFFER_BIT);
     // Print all the faces
     glBegin(GL_TRIANGLES);
-
-    glColor3f(1.0, 1.0, 0.0);
-	static Vector3 gravity(0, -9.8, 0);
-    cloth->addForceToAll(gravity);
-
-   //if (first){
-	    cloth->timeStep(0.1);
-		first = false;    
-		cloth->collisionCheck(*body);	
-    //}
-    
-		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE,
-			mat_amb_diff_cloth);
-    std::vector<Face> faces = cloth->getFaces();
+//    glColor3f(1.0, 1.0, 0.0);
+	
+	cloth->timeStep(0.05f);
+	//glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, mat_amb_diff_cloth);
+    std::vector<ClothFace*> faces = cloth->getClothFaces();
     for (unsigned int i = 0; i < faces.size(); ++i)
     {
-		float x1 = faces[i].points[0]->getPos().m_x, y1 = faces[i].points[0]->getPos().m_y, z1 = faces[i].points[0]->getPos().m_z;
-		float x2 = faces[i].points[1]->getPos().m_x, y2 = faces[i].points[1]->getPos().m_y, z2 = faces[i].points[1]->getPos().m_z;
-		float x3 = faces[i].points[2]->getPos().m_x, y3 = faces[i].points[2]->getPos().m_y, z3 = faces[i].points[2]->getPos().m_z;
+    	float x1 = faces[i]->cn1->getPosition().m_x, y1 = faces[i]->cn1->getPosition().m_y, z1 = faces[i]->cn1->getPosition().m_z;
+		float x2 = faces[i]->cn2->getPosition().m_x, y2 = faces[i]->cn2->getPosition().m_y, z2 = faces[i]->cn2->getPosition().m_z;
+		float x3 = faces[i]->cn3->getPosition().m_x, y3 = faces[i]->cn3->getPosition().m_y, z3 = faces[i]->cn3->getPosition().m_z;
 
 		Point v1, v2;
 		v1.x = x1 - x2;
@@ -176,7 +167,9 @@ void display()
 		v2.z = z1 - z3;
 
 		Point normal = cross(v1, v2);
-
+		if(faces[i]->cn1->isCollided() || faces[i]->cn2->isCollided() || faces[i]->cn3->isCollided()) {glColor3f(1.0,0.0,0.0);}
+    	else {glColor3f(1.0,1.0,0.0);}
+	
 		translate(x1, y1, z1);
 		rotate(x1, y1, z1);
 		glVertex3f(x1, y1, z1);
@@ -196,9 +189,7 @@ void display()
 		
 
     }
-
-	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE,
-		mat_amb_diff);
+	//glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE,mat_amb_diff);
 /*    
 	for(MyMesh::FaceIter f_it = clothmesh.faces_begin(); f_it != clothmesh.faces_end(); ++f_it) {
 		std::cout << "found face" << std::endl;
@@ -309,7 +300,7 @@ void keyboardFunc(unsigned char key, int x, int y)
             exit(0);
             break;
         case 's':
-        	first = true;
+        	//first = true;
         	break;
         default:
             break;
@@ -487,9 +478,7 @@ int main(int argc, char* argv[])
     	mesh.request_face_normals();
     	// let the mesh update the normals
     	mesh.update_normals();
-    	// dispose the face normals, as we don't need them anymore
-    	mesh.release_face_normals();
-	} else 	if ( !clothopt.check( OpenMesh::IO::Options::VertexNormal ) )
+    } else 	if ( !clothopt.check( OpenMesh::IO::Options::VertexNormal ) )
 	{
     	clothmesh.request_face_normals();
     	clothmesh.update_normals();
@@ -527,28 +516,14 @@ int main(int argc, char* argv[])
 	// Body
 	
 	// Cloth
-	cloth = new Cloth(clothmesh);
-
-	// don't need the normals anymore? Remove them!
-	mesh.release_vertex_normals();
-	clothmesh.release_vertex_normals();
-	// just check if it really works
-	if (mesh.has_vertex_normals())
-	{
-		std::cerr << "Ouch! ERROR! Shouldn't have any vertex normals anymore!\n";
-	 	return 1;
-	} else if (clothmesh.has_vertex_normals()){
-		std::cerr << "Cloth: Ouch! ERROR! Shouldn't have any vertex normals anymore!\n";
-		return 1;
-	}
-
-
+	cloth = new Cloth(clothmesh, body);
+	//cloth = new Cloth(body);
 	glutInit(&argc,argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH | GLUT_STENCIL);
 	glutInitWindowSize( 1280, 720 ); 
 
 
-	glutCreateWindow( "Cube Sample" );
+	glutCreateWindow( "Drape Sample" );
 	init();
 	glutDisplayFunc(display);  
 	glutIdleFunc(idleFunc);

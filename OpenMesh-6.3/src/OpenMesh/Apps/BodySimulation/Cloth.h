@@ -6,10 +6,9 @@
 #include <OpenMesh/Core/Mesh/PolyMesh_ArrayKernelT.hh>
 
 
-#include "Particle.h"
 #include "Spring.h"
+#include "ClothNode.h"
 #include "GlobalTypes.h"
-#include "Physics.h"
 #include "Body.h"
 // -------------------- STL
 #include <vector>
@@ -18,67 +17,42 @@
 #include <stdio.h>
 #include <set>
 
-//#include <OpenMesh/Core/Geometry/VectorT.hh>
-
-
-// struct ConstraintHash 
-// {
-// 	std::size_t operator()(const Constraint& c) const 
-// 	{
-// 		return std::hash<unsigned int>()(c.p1->getHash() + c.p2->getHash());
-// 	}
-// };
-
-// struct ConstraintCompare
-// {
-// 	bool operator()(const Constraint & lhs, const Constraint & rhs) const
-// 	{
-// 	    return (*lhs.p1 == *rhs.p1 && *lhs.p2 == *rhs.p2) || (*lhs.p1 == *rhs.p2 && *lhs.p2 == *rhs.p1);
-// 	}
-// };
-
-// ------------------------------ end of struct ConstraintHash
-struct Face
-{
-	explicit Face(Particle *p1, Particle *p2, Particle *p3)
-	{
-		points[0] = p1;
-		points[1] = p2;
-		points[2] = p3;
-	}
-
-	Particle *points[3];
-};
-
 class Cloth
 {
 private:
-  int numParticles;
-  std::vector<Particle *> m_particles; 
-  std::vector<Spring> m_springs;
-	std::vector<Face> m_faces;
-	void AddSpring(Particle *p1, Particle *p2, float d);
-	void AddSpring(std::set<std::string> &springSet, std::string p1str, std::string p2str, Particle* p1, Particle* p2, float d);
-	void AddFace(Particle *p1, Particle *p2, Particle *p3) { m_faces.push_back(Face(p1, p2, p3)); }
-
+	QuadMesh clothMesh;
+	Body* body;
+	std::vector<ClothNode*> clothNodes;
+	std::vector<ClothFace*> clothFaces;
+	std::vector<std::vector<std::vector<std::set<ClothFace*> > > > spatialFaces;
+  	std::vector<Spring*> clothSprings;
+    float top, bottom, left, right, front, back;
+    void addFaces(ClothNode* c1, ClothNode* c2, ClothNode* c3);
+	void addSpring(std::set<std::string> &springSet, std::string p1str, std::string p2str, ClothNode* p1, ClothNode* p2, int type);
+	//void AddBody(Body* body);
+	void spatialCloth();
+	void spatialClear();
 public:
-  explicit Cloth(QuadMesh mesh);
-  explicit Cloth() {}
+	explicit Cloth(QuadMesh mesh, Body* b);
+	explicit Cloth(Body* b);
+	explicit Cloth() {}
 	~Cloth();
+	void parseCloth();
 	void timeStep(float deltaTime);
 	void addForceToAll(const Vector3 &f);
-  void collisionCheck(Body &body);
+	void collisionCheck(Body &body);
 
-  // Getter
-	Particle* getParticle(unsigned int x) { return m_particles[x]; }
-	std::vector<Face>& getFaces() { return m_faces; }
-
-	// Attributes getter
-	Vector3 calcTriangleNormal(Particle *p1, Particle *p2, Particle *p3);
-	void getNormalsForAll();
-
+	// Getter
+	QuadMesh getClothMesh() { return clothMesh; }
+	std::vector<ClothNode*> getClothNodes() { return clothNodes;	}
+	ClothNode* getClothNode(unsigned int x) { return clothNodes[x]; }
+	std::vector<ClothFace*> getClothFaces() { return clothFaces; }
+	std::set<ClothFace*> getSpatialFaces(Vector3 pos);
+	std::vector<Spring*> getClothSprings(){return clothSprings; }
+	Body* getBody() { return body; }
+	
 	// for debug
-	void printAllParticles();
+	void printAllNodes();
 	void printAllSprings();
 };
 

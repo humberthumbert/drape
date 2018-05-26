@@ -16,6 +16,7 @@ if ( BUILD_APPS )
     add_subdirectory (ClosestPoint) 
     add_subdirectory (ClothSimulation)
     add_subdirectory (BodySimulation)
+    add_subdirectory (clothsim-master)
     
     # Add non ui apps as dependency before fixbundle 
     if ( WIN32 )

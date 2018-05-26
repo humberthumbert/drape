@@ -39,7 +39,14 @@ struct Vector3
         
         return m_x;
     }
-    
+
+    bool operator==(Vector3 vec) const 
+    {
+        return (m_x == vec.m_x) && (m_y == vec.m_y) && (m_z == vec.m_z);
+    }
+    friend std::ostream& operator << (std::ostream& o, const Vector3& vec) {
+        return o << "x: "<<vec.m_x << " y:" << vec.m_y << " z:" << vec.m_z;
+    }
     Vector3 getNorm() const
     {
         float l = length();

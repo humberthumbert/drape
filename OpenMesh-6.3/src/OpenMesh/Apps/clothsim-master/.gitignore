@@ -1,0 +1,8 @@
+*~
+*.o
+*.so
+*.swp
+clothsim
+lib/
+build/
+.gdb_history
